@@ -1,0 +1,10 @@
+plugins{
+    id 'base'
+    id 'java-library'
+}
+
+
+repositories {
+    mavenCentral()
+    maven { url 'https://jitpack.io' }
+}

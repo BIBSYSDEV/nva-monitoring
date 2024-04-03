@@ -1,0 +1,47 @@
+plugins {
+    id 'java'
+    id 'checkstyle'
+    id 'pmd'
+}
+
+
+group = 'com.github.bibsysdev'
+
+sourceCompatibility = JavaVersion.VERSION_21  // source-code version and must be <= targetCompatibility
+targetCompatibility = JavaVersion.VERSION_21 // bytecode target version
+
+repositories {
+    mavenCentral()
+    maven { url 'https://jitpack.io' }
+}
+
+tasks.named('test') {
+    useJUnitPlatform {
+        excludeTags("RemoteTest")
+    }
+    failFast = true
+    testLogging {
+        events 'skipped', 'passed', 'failed'
+    }
+}
+
+pmd {
+    toolVersion = "6.55.0"
+    ruleSetConfig = rootProject.resources.text.fromFile('config/pmd/ruleset.xml')
+    ruleSets = []
+    ignoreFailures = false
+}
+
+checkstyle {
+    configFile = rootProject.resources.text.fromFile('config/checkstyle/checkstyle.xml').asFile()
+    showViolations = true
+}
+tasks.withType(Checkstyle).configureEach {
+    reports {
+        xml.required
+        html.required
+        html.stylesheet rootProject.resources.text.fromFile('config/checkstyle/checkstyle-simple.xsl')
+    }
+}
+
+

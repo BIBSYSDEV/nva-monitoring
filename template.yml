@@ -4,6 +4,13 @@ Description: Template stack for NVA monitoring
 
 Resources:
 
+  UpdateDashboardHandlerLogGroup:
+    Type: "AWS::Logs::LogGroup"
+    DependsOn: UpdateDashboardHandlerTest
+    Properties:
+      RetentionInDays: 30
+      LogGroupName: !Join ["", ["/aws/lambda/", !Ref UpdateDashboardHandlerTest]]
+
   LambdaRole:
     Type: AWS::IAM::Role
     Properties:
@@ -35,7 +42,7 @@ Resources:
               - lambda:InvokeFunction
             Resource: "*"
 
-  UpdateDashboardHandler:
+  UpdateDashboardHandlerTest:
     Type: AWS::Serverless::Function
     DependsOn:
       - DefaultLambdaPermissions

@@ -45,7 +45,7 @@ Resources:
       State: "ENABLED"
       Targets:
         - Arn: !GetAtt UpdateDashboardHandler.Arn
-          id: UpdateDashboardHandler
+          Id: 'invoking-update-dashboard-target'
 
   PermissionForEventsToInvokeLambda:
     Type: "AWS::Lambda::Permission"

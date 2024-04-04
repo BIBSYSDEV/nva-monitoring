@@ -27,7 +27,7 @@ Resources:
       MemorySize: 1800
       Role: !GetAtt LambdaRole.Arn
 
-  DeployedStackEvent:
+  DeployedStackEventRule:
     Type: 'AWS::Events::Rule'
     Properties:
       Description: 'EventRule'
@@ -44,8 +44,9 @@ Resources:
             - "UpdateComplete"
       State: "ENABLED"
       Targets:
-        - Arn: !GetAtt UpdateDashboardHandler.Arn
-          Id: 'invoking-update-dashboard-target'
+        -
+          Arn: !GetAtt UpdateDashboardHandler.Arn
+          Id: "update-dashboard-target"
 
   PermissionForEventsToInvokeLambda:
     Type: "AWS::Lambda::Permission"
@@ -53,4 +54,4 @@ Resources:
       FunctionName: !Ref UpdateDashboardHandler
       Action: "lambda:InvokeFunction"
       Principal: "events.amazonaws.com"
-      SourceArn: !GetAtt DeployedStackEvent.Arn
+      SourceArn: !GetAtt DeployedStackEventRule.Arn

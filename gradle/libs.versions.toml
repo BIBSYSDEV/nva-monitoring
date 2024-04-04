@@ -1,6 +1,6 @@
 [versions]
-log4j = { strictly = '2.22.1' }
-slf4j = { strictly = '2.0.11' }
+log4j = { strictly = '2.23.0' }
+slf4j = { require = '2.0.12' }
 awsLambdaCore = { strictly = '1.2.3' }
 awsLambdaEvents = { strictly = '3.11.4' }
 

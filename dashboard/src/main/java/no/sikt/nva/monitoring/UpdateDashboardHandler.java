@@ -14,6 +14,7 @@ public class UpdateDashboardHandler implements RequestHandler<CloudFormationCust
     public Void handleRequest(CloudFormationCustomResourceEvent cloudFormationCustomResourceEvent, Context context) {
         logger.info("Hello world");
         logger.warn("Try again");
+        System.out.println("testing");
         //Future plans:
         //List all lambdas in the account
         //List all alarms in the account

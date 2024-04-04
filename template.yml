@@ -4,7 +4,7 @@ Description: Template stack for NVA monitoring
 
 Resources:
 
-  LambdaRoleTest:
+  LambdaRole:
     Type: AWS::IAM::Role
     Properties:
       Path: /
@@ -23,7 +23,7 @@ Resources:
     Properties:
       PolicyName: !Sub DefaultLambdaPermissions-${AWS::StackName}
       Roles:
-        - !Ref LambdaRoleTest
+        - !Ref LambdaRole
       PolicyDocument:
         Version: '2012-10-17'
         Statement:
@@ -35,40 +35,40 @@ Resources:
               - lambda:InvokeFunction
             Resource: "*"
 
-#  UpdateDashboardHandler:
-#    Type: AWS::Serverless::Function
-#    Properties:
-#      CodeUri: dashboard
-#      Handler: no.sikt.nva.monitoring.UpdateDashboardHandler::handleRequest
-#      Timeout: 900
-#      Runtime: java21
-#      MemorySize: 1800
-#      Role: !GetAtt LambdaRole.Arn
-#
-#  DeployedStackEventRule:
-#    Type: 'AWS::Events::Rule'
-#    Properties:
-#      Description: 'EventRule'
-#      EventPattern:
-#        source:
-#          - "aws.cloudformation"
-#        detail-type:
-#          - "AWS API Call via CloudTrail"
-#        detail:
-#          eventSource:
-#            - "cloudformation.amazonaws.com"
-#          eventName:
-#            - "CreateComplete"
-#            - "UpdateComplete"
-#      State: "ENABLED"
-#      Targets:
-#        - Arn: !GetAtt UpdateDashboardHandler.Arn
-#          Id: "update-dashboard-target"
-#
-#  PermissionForEventsToInvokeLambda:
-#    Type: "AWS::Lambda::Permission"
-#    Properties:
-#      FunctionName: !Ref UpdateDashboardHandler
-#      Action: "lambda:InvokeFunction"
-#      Principal: "events.amazonaws.com"
-#      SourceArn: !GetAtt DeployedStackEventRule.Arn
+  UpdateDashboardHandler:
+    Type: AWS::Serverless::Function
+    Properties:
+      CodeUri: dashboard
+      Handler: no.sikt.nva.monitoring.UpdateDashboardHandler::handleRequest
+      Timeout: 900
+      Runtime: java21
+      MemorySize: 1800
+      Role: !GetAtt LambdaRole.Arn
+
+  DeployedStackEventRule:
+    Type: 'AWS::Events::Rule'
+    Properties:
+      Description: 'EventRule'
+      EventPattern:
+        source:
+          - "aws.cloudformation"
+        detail-type:
+          - "AWS API Call via CloudTrail"
+        detail:
+          eventSource:
+            - "cloudformation.amazonaws.com"
+          eventName:
+            - "CreateComplete"
+            - "UpdateComplete"
+      State: "ENABLED"
+      Targets:
+        - Arn: !GetAtt UpdateDashboardHandler.Arn
+          Id: "update-dashboard-target"
+
+  PermissionForEventsToInvokeLambda:
+    Type: "AWS::Lambda::Permission"
+    Properties:
+      FunctionName: !Ref UpdateDashboardHandler
+      Action: "lambda:InvokeFunction"
+      Principal: "events.amazonaws.com"
+      SourceArn: !GetAtt DeployedStackEventRule.Arn

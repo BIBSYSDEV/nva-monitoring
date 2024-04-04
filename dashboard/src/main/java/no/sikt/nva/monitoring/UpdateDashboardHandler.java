@@ -15,6 +15,7 @@ public class UpdateDashboardHandler implements RequestHandler<CloudFormationCust
         context.getLogger().log("Fudge");
         logger.info("Hello world");
         logger.warn("Try again");
+        logger.error("ERRROR");
         System.out.println("testing");
         //Future plans:
         //List all lambdas in the account

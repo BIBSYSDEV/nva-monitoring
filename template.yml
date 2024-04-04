@@ -43,32 +43,20 @@ Resources:
       Timeout: 900
       Runtime: java21
       MemorySize: 1800
-      Role: !GetAtt LambdaRole.Arn
-
-  DeployedStackEventRule:
-    Type: 'AWS::Events::Rule'
-    Properties:
-      Description: 'EventRule'
-      EventPattern:
-        source:
-          - "aws.cloudformation"
-        detail-type:
-          - "AWS API Call via CloudTrail"
-        detail:
-          eventSource:
-            - "cloudformation.amazonaws.com"
-          eventName:
-            - "CreateComplete"
-            - "UpdateComplete"
-      State: "ENABLED"
-      Targets:
-        - Arn: !GetAtt UpdateDashboardHandler.Arn
-          Id: "update-dashboard-target"
-
-  PermissionForEventsToInvokeLambda:
-    Type: "AWS::Lambda::Permission"
-    Properties:
-      FunctionName: !Ref UpdateDashboardHandler
-      Action: "lambda:InvokeFunction"
-      Principal: "events.amazonaws.com"
-      SourceArn: !GetAtt DeployedStackEventRule.Arn
+      Policies:
+        - DefaultLambdaPermissions
+      Events:
+        StackEvent:
+          Type: CloudWatchEvent
+          Properties:
+            Pattern:
+              source:
+                - "aws.cloudformation"
+              detail-type:
+                - "AWS API Call via CloudTrail"
+              detail:
+                eventSource:
+                  - "cloudformation.amazonaws.com"
+                eventName:
+                  - "CreateStack"
+                  - "UpdateStack"

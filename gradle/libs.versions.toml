@@ -1,20 +1,25 @@
 [versions]
-awsSdk2 = { strictly = '2.23.12' }
 log4j = { strictly = '2.22.1' }
 slf4j = { strictly = '2.0.11' }
+awsLambdaCore = { strictly = '1.2.3' }
+awsLambdaEvents = { strictly = '3.11.4' }
 
 
 [libraries]
 
+aws-lambda-java-core = { group = 'com.amazonaws', name = 'aws-lambda-java-core', version.ref = 'awsLambdaCore' }
+aws-lambda-events = { group = 'com.amazonaws', name = 'aws-lambda-java-events', version.ref = 'awsLambdaEvents' }
 
-aws-core = { group = 'software.amazon.awssdk', name = 'aws-core', version.ref = 'awsSdk2' }
 
 
 
-slf4j = { group = 'org.slf4j', name = 'slf4j-api', version.ref = 'slf4j' }
 log4j-core = { group = 'org.apache.logging.log4j', name = 'log4j-core', version.ref = 'log4j' }
 log4j-api = { group = 'org.apache.logging.log4j', name = 'log4j-api', version.ref = 'log4j' }
+log4j-slf4j-impl = { group = 'org.apache.logging.log4j', name = 'log4j-slf4j2-impl', version.ref = 'log4j' }
+slf4j-api = { group = 'org.slf4j', name = 'slf4j-api', version.ref = 'slf4j' }
 
+[bundles]
+logging = ['log4j-core', 'log4j-api', 'log4j-slf4j-impl', 'slf4j-api']
 
 
 

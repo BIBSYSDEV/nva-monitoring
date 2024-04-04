@@ -1,6 +1,9 @@
 plugins {
     id 'nva.monitoring.rootplugin'
-    id 'nva.monitoring.java-common-conventions'
+}
+
+allprojects{
+    apply plugin: 'nva.monitoring.java-common-conventions'
 }
 
 group = 'com.github.bibsysdev'

@@ -1,9 +1,9 @@
 [versions]
 log4j = { strictly = '2.23.0' }
-slf4j = { require = '2.0.12' }
 awsLambdaCore = { strictly = '1.2.3' }
 awsLambdaEvents = { strictly = '3.11.4' }
 nva = { strictly = '1.38.2' }
+awsLog4j2Version = { strictly = '1.6.0' }
 
 
 [libraries]
@@ -13,14 +13,12 @@ aws-lambda-events = { group = 'com.amazonaws', name = 'aws-lambda-java-events', 
 
 
 
+aws-lambda-log4j2 = { group = 'com.amazonaws', name = 'aws-lambda-java-log4j2', version.ref = 'awsLog4j2Version' }
 nva-logutils = { group = "com.github.bibsysdev", name = "logutils", version.ref = "nva" }
-log4j-core = { group = 'org.apache.logging.log4j', name = 'log4j-core', version.ref = 'log4j' }
-log4j-api = { group = 'org.apache.logging.log4j', name = 'log4j-api', version.ref = 'log4j' }
 log4j-slf4j-impl = { group = 'org.apache.logging.log4j', name = 'log4j-slf4j2-impl', version.ref = 'log4j' }
-slf4j-api = { group = 'org.slf4j', name = 'slf4j-api', version.ref = 'slf4j' }
 
 [bundles]
-logging = ['log4j-core', 'log4j-api', 'log4j-slf4j-impl', 'slf4j-api']
+logging = ['log4j-slf4j-impl', 'aws-lambda-log4j2']
 testing = ['nva-logutils']
 
 

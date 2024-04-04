@@ -12,6 +12,7 @@ public class UpdateDashboardHandler implements RequestHandler<CloudFormationCust
 
     @Override
     public Void handleRequest(CloudFormationCustomResourceEvent cloudFormationCustomResourceEvent, Context context) {
+        context.getLogger().log("Fudge");
         logger.info("Hello world");
         logger.warn("Try again");
         System.out.println("testing");

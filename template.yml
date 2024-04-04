@@ -6,10 +6,10 @@ Resources:
 
   UpdateDashboardHandlerLogGroup:
     Type: "AWS::Logs::LogGroup"
-    DependsOn: UpdateDashboardHandlerTest
+    DependsOn: UpdateDashboardHandler
     Properties:
       RetentionInDays: 30
-      LogGroupName: !Join ["", ["/aws/lambda/", !Ref UpdateDashboardHandlerTest]]
+      LogGroupName: !Join ["", ["/aws/lambda/", !Ref UpdateDashboardHandler]]
 
   LambdaRole:
     Type: AWS::IAM::Role
@@ -42,7 +42,7 @@ Resources:
               - lambda:InvokeFunction
             Resource: "*"
 
-  UpdateDashboardHandlerTest:
+  UpdateDashboardHandler:
     Type: AWS::Serverless::Function
     DependsOn:
       - DefaultLambdaPermissions

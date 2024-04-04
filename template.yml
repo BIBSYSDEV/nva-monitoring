@@ -37,6 +37,9 @@ Resources:
 
   UpdateDashboardHandler:
     Type: AWS::Serverless::Function
+    DependsOn:
+      - DefaultLambdaPermissions
+      - LambdaRole
     Properties:
       CodeUri: dashboard
       Handler: no.sikt.nva.monitoring.UpdateDashboardHandler::handleRequest

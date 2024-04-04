@@ -44,8 +44,7 @@ Resources:
             - "UpdateComplete"
       State: "ENABLED"
       Targets:
-        -
-          Arn: !GetAtt UpdateDashboardHandler.Arn
+        - Arn: !GetAtt UpdateDashboardHandler.Arn
           Id: "update-dashboard-target"
 
   PermissionForEventsToInvokeLambda:

@@ -1,0 +1,72 @@
+AWSTemplateFormatVersion: '2010-09-09'
+Transform: AWS::Serverless-2016-10-31
+Description: Template stack for NVA monitoring
+
+Resources:
+
+  UpdateDashboardHandlerLogGroup:
+    Type: "AWS::Logs::LogGroup"
+    DependsOn: UpdateDashboardHandler
+    Properties:
+      RetentionInDays: 30
+      LogGroupName: !Join ["", ["/aws/lambda/", !Ref UpdateDashboardHandler]]
+
+  LambdaRole:
+    Type: AWS::IAM::Role
+    Properties:
+      Path: /
+      AssumeRolePolicyDocument:
+        Version: '2012-10-17'
+        Statement:
+          - Effect: Allow
+            Principal:
+              Service:
+                - lambda.amazonaws.com
+            Action: sts:AssumeRole
+
+
+  DefaultLambdaPermissions:
+    Type: AWS::IAM::Policy
+    Properties:
+      PolicyName: !Sub DefaultLambdaPermissions-${AWS::StackName}
+      Roles:
+        - !Ref LambdaRole
+      PolicyDocument:
+        Version: '2012-10-17'
+        Statement:
+          - Effect: Allow
+            Action:
+              - logs:CreateLogGroup
+              - logs:CreateLogStream
+              - logs:PutLogEvents
+              - lambda:InvokeFunction
+            Resource: "*"
+
+  UpdateDashboardHandler:
+    Type: AWS::Serverless::Function
+    DependsOn:
+      - DefaultLambdaPermissions
+      - LambdaRole
+    Properties:
+      CodeUri: dashboard
+      Handler: no.sikt.nva.monitoring.UpdateDashboardHandler::handleRequest
+      Timeout: 900
+      Runtime: java21
+      Role: !GetAtt LambdaRole.Arn
+      MemorySize: 1800
+      Events:
+        StackEvent:
+          Type: CloudWatchEvent
+          Properties:
+            Pattern:
+              source:
+                - "aws.cloudformation"
+              detail-type:
+                - "AWS API Call via CloudTrail"
+              detail:
+                eventSource:
+                  - "cloudformation.amazonaws.com"
+                eventName:
+                  - "CreateStack"
+                  - "UpdateStack"
+                  - "DeleteStack"

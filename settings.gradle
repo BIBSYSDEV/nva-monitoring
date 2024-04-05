@@ -1,2 +1,3 @@
 rootProject.name = 'nva-monitoring'
+include 'dashboard'
 

@@ -52,7 +52,8 @@ Resources:
       Handler: no.sikt.nva.monitoring.UpdateDashboardHandler::handleRequest
       Timeout: 900
       Runtime: java21
-      Role: !GetAtt LambdaRole.Arn
+      Policies:
+        -DefaultLambdaPermissions
       MemorySize: 1800
       Events:
         StackEvent:

@@ -10,6 +10,8 @@ import nva.commons.core.JacocoGenerated;
 
 public class DashboardBody implements JsonSerializable {
 
+    //For documentation of widgets and dashboardbody: https://docs.aws.amazon.com/AmazonCloudWatch/latest/APIReference/CloudWatch-Dashboard-Body-Structure.html
+
     @JsonProperty("widgets")
     private List<CloudWatchWidget> widgets;
 

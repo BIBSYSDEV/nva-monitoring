@@ -44,12 +44,6 @@ public class UpdateDashboardHandlerTest {
     private FakeCloudWatchClient cloudWatchClient;
     private UpdateDashboardHandler handler;
 
-    /*
- Hva vil jeg asserte:
- Jeg vil asserte at det finnes et dashboard med mine widgets.
- Jeg kan gjøre det ved å enten lytte på kallene eller lage noe fake cloudwatchClient implementasjon.
-  */
-
     @BeforeEach
     void init() {
         cloudWatchClient = new FakeCloudWatchClient();

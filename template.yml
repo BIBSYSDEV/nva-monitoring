@@ -48,7 +48,7 @@ Resources:
               - lambda:InvokeFunction
             Resource: "*"
 
-  UpdateCloudwatchDashboardPermission:
+  UpdateCloudwatchPermission:
     Type: AWS::IAM::Policy
     Properties:
       PolicyName: !Sub UpdateCloudwatchDashboardPermission-${AWS::StackName}
@@ -69,7 +69,7 @@ Resources:
     DependsOn:
       - DefaultLambdaPermissions
       - LambdaRole
-      - UpdateCloudwatchDashboardPermission
+      - UpdateCloudwatchPermission
     Properties:
       CodeUri: dashboard
       Handler: no.sikt.nva.monitoring.UpdateDashboardHandler::handleRequest

@@ -80,7 +80,7 @@ Resources:
       MemorySize: 1800
       Environment:
         Variables:
-          DASHBOARD_NAME: !Ref NvaMonitoringDashBoardName
+          DASHBOARD_NAME: !Sub "${NvaMonitoringDashBoardName}-${AWS::AccountId}"
       Events:
         StackEvent:
           Type: CloudWatchEvent
@@ -101,6 +101,6 @@ Resources:
   MonitoringDashboard:
     Type: AWS::CloudWatch::Dashboard
     Properties:
-      DashboardName: !Ref NvaMonitoringDashBoardName
+      DashboardName: !Sub "${NvaMonitoringDashBoardName}-${AWS::AccountId}"
       DashboardBody: "{\"widgets\":[]}"
 

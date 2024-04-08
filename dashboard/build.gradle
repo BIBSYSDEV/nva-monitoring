@@ -1,5 +1,16 @@
+apply plugin: 'io.freefair.lombok'
+
 dependencies {
     implementation libs.aws.lambda.java.core
     implementation libs.aws.lambda.events
     implementation libs.bundles.logging
+    implementation libs.aws.cloudwatch
+    implementation libs.nva.core
+    implementation libs.bundles.jackson
+    implementation libs.nva.json
+    testImplementation libs.bundles.testing
+}
+
+test {
+    environment "DASHBOARD_NAME", "someDashBoardName"
 }

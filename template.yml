@@ -2,6 +2,12 @@ AWSTemplateFormatVersion: '2010-09-09'
 Transform: AWS::Serverless-2016-10-31
 Description: Template stack for NVA monitoring
 
+Parameters:
+  NvaMonitoringDashBoardName:
+    Type: 'String'
+    Default: 'NvaMonitoringDashboard'
+    Description: Name monitoring dashboard that will be updated by this lambda
+
 Resources:
 
   UpdateDashboardHandlerLogGroup:
@@ -54,6 +60,9 @@ Resources:
       Runtime: java21
       Role: !GetAtt LambdaRole.Arn
       MemorySize: 1800
+      Environment:
+        Variables:
+          DASHBOARD_NAME: !Ref NvaMonitoringDashBoardName
       Events:
         StackEvent:
           Type: CloudWatchEvent
@@ -70,3 +79,10 @@ Resources:
                   - "CreateStack"
                   - "UpdateStack"
                   - "DeleteStack"
+
+  MonitoringDashboard:
+    Type: AWS::CloudWatch::Dashboard
+    Properties:
+      DashboardName: !Ref NvaMonitoringDashBoardName
+      DashboardBody: "{\"widgets\":[]}"
+

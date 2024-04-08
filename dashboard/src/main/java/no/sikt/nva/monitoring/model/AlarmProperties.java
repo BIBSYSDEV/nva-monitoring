@@ -22,10 +22,17 @@ public class AlarmProperties implements WidgetProperties, JsonSerializable {
 
     private String title;
     private List<String> alarms;
+    private String sortBy;
 
     @JacocoGenerated
     public AlarmProperties() {
 
+    }
+
+    @JacocoGenerated
+    @Override
+    public int hashCode() {
+        return Objects.hash(super.hashCode(), title, alarms, sortBy);
     }
 
     @JacocoGenerated
@@ -41,13 +48,9 @@ public class AlarmProperties implements WidgetProperties, JsonSerializable {
             return false;
         }
         AlarmProperties that = (AlarmProperties) o;
-        return Objects.equals(title, that.title) && Objects.equals(alarms, that.alarms);
-    }
-
-    @JacocoGenerated
-    @Override
-    public int hashCode() {
-        return Objects.hash(super.hashCode(), title, alarms);
+        return Objects.equals(title, that.title)
+               && Objects.equals(alarms, that.alarms)
+               && Objects.equals(sortBy, that.sortBy);
     }
 
     @JacocoGenerated

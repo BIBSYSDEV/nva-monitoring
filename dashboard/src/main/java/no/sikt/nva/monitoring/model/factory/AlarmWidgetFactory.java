@@ -17,6 +17,8 @@ public class AlarmWidgetFactory {
     public static final int HEIGHT = 6;
     public static final int X_COORDINATE = 0;
     public static final int Y_COORDINATE = 0;
+    public static final String STATE_UPDATED_TIMESTAMP = "stateUpdatedTimestamp";
+    public static final String ALARM = "alarm";
     private final CloudWatchClient cloudWatchClient;
 
     public AlarmWidgetFactory(CloudWatchClient cloudWatchClient) {
@@ -25,7 +27,7 @@ public class AlarmWidgetFactory {
 
     public CloudWatchWidget creatCloudWatchWidget() {
         return CloudWatchWidget.builder()
-                   .withType(METRIC)
+                   .withType(ALARM)
                    .withWidth(WIDTH)
                    .withHeight(HEIGHT)
                    .withX(X_COORDINATE)
@@ -37,6 +39,7 @@ public class AlarmWidgetFactory {
     private AlarmProperties createAlarmProperties() {
         return AlarmProperties.builder()
                    .withTitle(ALARMS)
+                   .withSortBy(STATE_UPDATED_TIMESTAMP)
                    .withAlarms(retrieveExistingAlarms())
                    .build();
     }

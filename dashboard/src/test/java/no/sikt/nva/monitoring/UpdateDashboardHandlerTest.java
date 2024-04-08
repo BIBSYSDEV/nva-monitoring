@@ -1,8 +1,9 @@
 package no.sikt.nva.monitoring;
 
+import static no.sikt.nva.monitoring.model.factory.AlarmWidgetFactory.ALARM;
 import static no.sikt.nva.monitoring.model.factory.AlarmWidgetFactory.ALARMS;
 import static no.sikt.nva.monitoring.model.factory.AlarmWidgetFactory.HEIGHT;
-import static no.sikt.nva.monitoring.model.factory.AlarmWidgetFactory.METRIC;
+import static no.sikt.nva.monitoring.model.factory.AlarmWidgetFactory.STATE_UPDATED_TIMESTAMP;
 import static no.sikt.nva.monitoring.model.factory.AlarmWidgetFactory.WIDTH;
 import static no.sikt.nva.monitoring.model.factory.AlarmWidgetFactory.X_COORDINATE;
 import static no.sikt.nva.monitoring.model.factory.AlarmWidgetFactory.Y_COORDINATE;
@@ -30,7 +31,7 @@ public class UpdateDashboardHandlerTest {
     private static final Context mockContext = mock(Context.class);
     private static final CloudFormationCustomResourceEvent EVENT = CloudFormationCustomResourceEvent.builder().build();
     private static final String EXPECTED_ALARM_WIDGET = CloudWatchWidget.builder()
-                                                            .withType(METRIC)
+                                                            .withType(ALARM)
                                                             .withWidth(WIDTH)
                                                             .withHeight(HEIGHT)
                                                             .withX(X_COORDINATE)
@@ -39,6 +40,7 @@ public class UpdateDashboardHandlerTest {
                                                                                 .withAlarms(
                                                                                     List.of(ALARM_ARN_1,
                                                                                             ALARM_ARN_2))
+                                                                                .withSortBy(STATE_UPDATED_TIMESTAMP)
                                                                                 .withTitle(ALARMS).build())
                                                             .build().toJsonString();
     private FakeCloudWatchClient cloudWatchClient;

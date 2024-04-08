@@ -7,6 +7,10 @@ Parameters:
     Type: 'String'
     Default: 'NvaMonitoringDashboard'
     Description: Name monitoring dashboard that will be updated by this lambda
+  ApiDomain:
+    Type: 'AWS::SSM::Parameter::Value<String>'
+    Description: The Api domain
+    Default: /NVA/ApiDomain
 
 Resources:
 
@@ -80,7 +84,7 @@ Resources:
       MemorySize: 1800
       Environment:
         Variables:
-          DASHBOARD_NAME: !Sub "${NvaMonitoringDashBoardName}-${AWS::AccountId}"
+          DASHBOARD_NAME: !Sub "${NvaMonitoringDashBoardName}-${ApiDomain}"
       Events:
         StackEvent:
           Type: CloudWatchEvent
@@ -101,6 +105,6 @@ Resources:
   MonitoringDashboard:
     Type: AWS::CloudWatch::Dashboard
     Properties:
-      DashboardName: !Sub "${NvaMonitoringDashBoardName}-${AWS::AccountId}"
+      DashboardName: !Sub "${NvaMonitoringDashBoardName}-${ApiDomain}"
       DashboardBody: "{\"widgets\":[]}"
 

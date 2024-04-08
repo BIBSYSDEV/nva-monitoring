@@ -48,28 +48,11 @@ Resources:
               - lambda:InvokeFunction
             Resource: "*"
 
-  UpdateCloudwatchPermission:
-    Type: AWS::IAM::Policy
-    Properties:
-      PolicyName: !Sub UpdateCloudwatchDashboardPermission-${AWS::StackName}
-      Roles:
-        - !Ref LambdaRole
-      PolicyDocument:
-        Version: '2012-10-17'
-        Statement:
-          - Effect: Allow
-            Actions:
-              - cloudwatch:DescribeAlarms
-              - cloudwatch:GetDashboard
-              - cloudwatch:PutDashboard
-            Resource: "*"
-
   UpdateDashboardHandler:
     Type: AWS::Serverless::Function
     DependsOn:
       - DefaultLambdaPermissions
       - LambdaRole
-      - UpdateCloudwatchPermission
     Properties:
       CodeUri: dashboard
       Handler: no.sikt.nva.monitoring.UpdateDashboardHandler::handleRequest

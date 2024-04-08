@@ -24,23 +24,12 @@ public class AlarmWidgetFactory {
         this.cloudWatchClient = cloudWatchClient;
     }
 
-    public CloudWatchWidget creatCloudWatchWidget() {
-        return CloudWatchWidget.builder()
-                   .withType(ALARM)
-                   .withWidth(WIDTH)
-                   .withHeight(HEIGHT)
-                   .withX(X_COORDINATE)
-                   .withY(Y_COORDINATE)
-                   .withProperties(createAlarmProperties())
-                   .build();
+    public CloudWatchWidget<AlarmProperties> creatCloudWatchWidget() {
+        return new CloudWatchWidget<>(ALARM, createAlarmProperties(), HEIGHT, WIDTH, X_COORDINATE, Y_COORDINATE);
     }
 
     private AlarmProperties createAlarmProperties() {
-        return AlarmProperties.builder()
-                   .withTitle(ALARMS)
-                   .withSortBy(STATE_UPDATED_TIMESTAMP)
-                   .withAlarms(retrieveExistingAlarms())
-                   .build();
+        return new AlarmProperties(ALARMS, retrieveExistingAlarms(), STATE_UPDATED_TIMESTAMP);
     }
 
     private List<String> retrieveExistingAlarms() {

@@ -30,19 +30,11 @@ public class UpdateDashboardHandlerTest {
 
     private static final Context mockContext = mock(Context.class);
     private static final CloudFormationCustomResourceEvent EVENT = CloudFormationCustomResourceEvent.builder().build();
-    private static final String EXPECTED_ALARM_WIDGET = CloudWatchWidget.builder()
-                                                            .withType(ALARM)
-                                                            .withWidth(WIDTH)
-                                                            .withHeight(HEIGHT)
-                                                            .withX(X_COORDINATE)
-                                                            .withY(Y_COORDINATE)
-                                                            .withProperties(AlarmProperties.builder()
-                                                                                .withAlarms(
-                                                                                    List.of(ALARM_ARN_1,
-                                                                                            ALARM_ARN_2))
-                                                                                .withSortBy(STATE_UPDATED_TIMESTAMP)
-                                                                                .withTitle(ALARMS).build())
-                                                            .build().toJsonString();
+    private static final String EXPECTED_ALARM_WIDGET =
+        new CloudWatchWidget<>(ALARM, new AlarmProperties(ALARMS, List.of(ALARM_ARN_1, ALARM_ARN_2),
+                                                          STATE_UPDATED_TIMESTAMP), HEIGHT, WIDTH,
+                               X_COORDINATE,
+                               Y_COORDINATE).toJsonString();
     private FakeCloudWatchClient cloudWatchClient;
     private UpdateDashboardHandler handler;
 
@@ -65,6 +57,6 @@ public class UpdateDashboardHandlerTest {
         var dashboardBodyString = cloudWatchClient.getPutDashboardRequest().dashboardBody();
         var dashboardBody = JsonUtils.dtoObjectMapper.readValue(dashboardBodyString, DashboardBody.class);
         var expectedAlarmWidget = JsonUtils.dtoObjectMapper.readValue(EXPECTED_ALARM_WIDGET, CloudWatchWidget.class);
-        assertThat(dashboardBody.getWidgets(), hasItem(expectedAlarmWidget));
+        assertThat(dashboardBody.widgets(), hasItem(expectedAlarmWidget));
     }
 }

@@ -40,14 +40,11 @@ public class UpdateDashboardHandler implements RequestHandler<CloudFormationCust
                                           .dashboardName(dashboardName)
                                           .dashboardBody(createDashBoardBody())
                                           .build());
-        //Update sharing policy? and share dashboard
         return null;
     }
 
     private String createDashBoardBody() {
-        var dashboardBody = new DashboardBody();
-        dashboardBody.setWidgets(createWidgets());
-        return dashboardBody.toJsonString();
+        return new DashboardBody(createWidgets()).toJsonString();
     }
 
     private List<CloudWatchWidget> createWidgets() {

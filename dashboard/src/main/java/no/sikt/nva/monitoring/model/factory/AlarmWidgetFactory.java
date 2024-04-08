@@ -13,7 +13,7 @@ public class AlarmWidgetFactory {
 
     public static final String ALARMS = "alarms";
     public static final int WIDTH = 24;
-    public static final int HEIGHT = 10;
+    public static final int HEIGHT = 8;
     public static final int X_COORDINATE = 0;
     public static final int Y_COORDINATE = 0;
     public static final String STATE_UPDATED_TIMESTAMP = "stateUpdatedTimestamp";

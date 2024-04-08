@@ -8,8 +8,6 @@ import no.sikt.nva.monitoring.model.CloudWatchWidget;
 import no.sikt.nva.monitoring.model.DashboardBody;
 import no.sikt.nva.monitoring.model.factory.AlarmWidgetFactory;
 import nva.commons.core.Environment;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import software.amazon.awssdk.regions.Region;
 import software.amazon.awssdk.services.cloudwatch.CloudWatchClient;
 import nva.commons.core.JacocoGenerated;
@@ -17,7 +15,6 @@ import software.amazon.awssdk.services.cloudwatch.model.PutDashboardRequest;
 
 public class UpdateDashboardHandler implements RequestHandler<CloudFormationCustomResourceEvent, Void> {
 
-    private static final Logger logger = LoggerFactory.getLogger(UpdateDashboardHandler.class);
 
     private final CloudWatchClient cloudWatchClient;
     private final String dashboardName;
@@ -36,7 +33,6 @@ public class UpdateDashboardHandler implements RequestHandler<CloudFormationCust
 
     @Override
     public Void handleRequest(CloudFormationCustomResourceEvent cloudFormationCustomResourceEvent, Context context) {
-        logger.info("Trigges ved stack updates");
         //Future plans:
         //List all lambdas in the account
         //Create cloudwatch widgets for lambdas

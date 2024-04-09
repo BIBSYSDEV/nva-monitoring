@@ -64,6 +64,20 @@ Resources:
               - cloudwatch:DescribeAlarms
             Resource: "*"
 
+  ApiGatewayPermissions:
+    Type: AWS::IAM::Policy
+    Properties:
+      PolicyName: !Sub ApiGatewayPermissions-${AWS::StackName}
+      Roles:
+        - !Ref LambdaRole
+      PolicyDocument:
+        Version: '2012-10-17'
+        Statement:
+          - Effect: Allow
+            Action:
+              - Apigateway:GET
+            Resource: "*"
+
 
   UpdateDashboardHandler:
     Type: AWS::Serverless::Function
@@ -71,6 +85,7 @@ Resources:
       - DefaultLambdaPermissions
       - LambdaRole
       - CloudWatchPermissions
+      - ApiGatewayPermissions
     Properties:
       CodeUri: dashboard
       Handler: no.sikt.nva.monitoring.UpdateDashboardHandler::handleRequest

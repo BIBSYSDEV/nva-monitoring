@@ -1,0 +1,62 @@
+package no.sikt.nva.monitoring;
+
+import static no.sikt.nva.monitoring.model.factory.AlarmWidgetFactory.ALARM;
+import static no.sikt.nva.monitoring.model.factory.AlarmWidgetFactory.ALARMS;
+import static no.sikt.nva.monitoring.model.factory.AlarmWidgetFactory.HEIGHT;
+import static no.sikt.nva.monitoring.model.factory.AlarmWidgetFactory.STATE_UPDATED_TIMESTAMP;
+import static no.sikt.nva.monitoring.model.factory.AlarmWidgetFactory.WIDTH;
+import static no.sikt.nva.monitoring.model.factory.AlarmWidgetFactory.X_COORDINATE;
+import static no.sikt.nva.monitoring.model.factory.AlarmWidgetFactory.Y_COORDINATE;
+import static no.sikt.nva.monitoring.utils.FakeCloudWatchClient.ALARM_ARN_1;
+import static no.sikt.nva.monitoring.utils.FakeCloudWatchClient.ALARM_ARN_2;
+import static org.hamcrest.Matchers.hasItem;
+import static org.hamcrest.MatcherAssert.assertThat;
+import static org.junit.jupiter.api.Assertions.assertThrows;
+import static org.mockito.Mockito.mock;
+import com.amazonaws.services.lambda.runtime.Context;
+import com.amazonaws.services.lambda.runtime.events.CloudFormationCustomResourceEvent;
+import com.fasterxml.jackson.core.JsonProcessingException;
+import java.util.List;
+import no.sikt.nva.monitoring.model.AlarmProperties;
+import no.sikt.nva.monitoring.model.CloudWatchWidget;
+import no.sikt.nva.monitoring.model.DashboardBody;
+import no.sikt.nva.monitoring.utils.FakeCloudWatchClient;
+import no.sikt.nva.monitoring.utils.FakeCloudWatchClientThrowingException;
+import no.unit.nva.commons.json.JsonUtils;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
+
+public class UpdateDashboardHandlerTest {
+
+    private static final Context mockContext = mock(Context.class);
+    private static final CloudFormationCustomResourceEvent EVENT = CloudFormationCustomResourceEvent.builder().build();
+    private static final String EXPECTED_ALARM_WIDGET =
+        new CloudWatchWidget<>(ALARM, new AlarmProperties(ALARMS, List.of(ALARM_ARN_1, ALARM_ARN_2),
+                                                          STATE_UPDATED_TIMESTAMP), HEIGHT, WIDTH,
+                               X_COORDINATE,
+                               Y_COORDINATE).toJsonString();
+    private FakeCloudWatchClient cloudWatchClient;
+    private UpdateDashboardHandler handler;
+
+    @BeforeEach
+    void init() {
+        cloudWatchClient = new FakeCloudWatchClient();
+        handler = new UpdateDashboardHandler(cloudWatchClient);
+    }
+
+    @Test
+    void shouldThrowExceptionWhenCloudWatchClientThrowsException() {
+        handler = new UpdateDashboardHandler(new FakeCloudWatchClientThrowingException());
+        assertThrows(Exception.class, () -> handler.handleRequest(EVENT,
+                                                                  mockContext));
+    }
+
+    @Test
+    void shouldUpdateDashboardWithAlarmsInWidgetList() throws JsonProcessingException {
+        handler.handleRequest(EVENT, mockContext);
+        var dashboardBodyString = cloudWatchClient.getPutDashboardRequest().dashboardBody();
+        var dashboardBody = JsonUtils.dtoObjectMapper.readValue(dashboardBodyString, DashboardBody.class);
+        var expectedAlarmWidget = JsonUtils.dtoObjectMapper.readValue(EXPECTED_ALARM_WIDGET, CloudWatchWidget.class);
+        assertThat(dashboardBody.widgets(), hasItem(expectedAlarmWidget));
+    }
+}

@@ -3,6 +3,14 @@ log4j = { strictly = '2.23.0' }
 awsLambdaCore = { strictly = '1.2.3' }
 awsLambdaEvents = { strictly = '3.11.4' }
 awsLog4j2Version = { strictly = '1.6.0' }
+junit = { strictly = '5.10.2' }
+mockito = { strictly = '5.10.0' }
+vavrVersion = { strictly = '0.10.4' }
+resilience4jRetry = { strictly = '2.2.0' }
+awsSdk2 = {strictly = '2.25.24'}
+nva = { strictly = '1.38.2' }
+jackson = { strictly = '2.16.1' }
+hamcrest = { strictly = '2.2' }
 
 
 [libraries]
@@ -10,13 +18,35 @@ awsLog4j2Version = { strictly = '1.6.0' }
 aws-lambda-java-core = { group = 'com.amazonaws', name = 'aws-lambda-java-core', version.ref = 'awsLambdaCore' }
 aws-lambda-events = { group = 'com.amazonaws', name = 'aws-lambda-java-events', version.ref = 'awsLambdaEvents' }
 
-
+aws-cloudwatch = {group = 'software.amazon.awssdk', name = 'cloudwatch', version.ref = 'awsSdk2'}
 
 aws-lambda-log4j2 = { group = 'com.amazonaws', name = 'aws-lambda-java-log4j2', version.ref = 'awsLog4j2Version' }
 log4j-slf4j-impl = { group = 'org.apache.logging.log4j', name = 'log4j-slf4j2-impl', version.ref = 'log4j' }
 
+vavr = { group = 'io.vavr', name = 'vavr', version.ref = 'vavrVersion' }
+resilience4j-retry = { group = 'io.github.resilience4j', name = 'resilience4j-retry', version.ref = 'resilience4jRetry' }
+
+nva-core = { group = 'com.github.bibsysdev', name = 'core', version.ref = 'nva' }
+nva-json = { group = 'com.github.bibsysdev', name = 'json', version.ref = 'nva' }
+
+
+jackson-core = { group = 'com.fasterxml.jackson.core', name = 'jackson-core', version.ref = 'jackson' }
+jackson-datatype-jsr310 = { group = 'com.fasterxml.jackson.datatype', name = 'jackson-datatype-jsr310', version.ref = 'jackson' }
+jackson-datatype-jdk8 = { group = 'com.fasterxml.jackson.datatype', name = 'jackson-datatype-jdk8', version.ref = 'jackson' }
+
+
+
+hamcrest-base = { group = 'org.hamcrest', name = 'hamcrest', version.ref = 'hamcrest' }
+hamcrest-core = { group = 'org.hamcrest', name = 'hamcrest-core', version.ref = 'hamcrest' }
+
+junit-jupiter-engine = { group = 'org.junit.jupiter', name = 'junit-jupiter-engine', version.ref = 'junit' }
+mockito-junit = { group = 'org.mockito', name = 'mockito-junit-jupiter', version.ref = 'mockito' }
+mockito-core = { group = 'org.mockito', name = 'mockito-core', version.ref = 'mockito' }
+
 [bundles]
 logging = ['log4j-slf4j-impl', 'aws-lambda-log4j2']
+testing = ['junit-jupiter-engine', 'mockito-core', 'mockito-junit', 'hamcrest-base', 'hamcrest-core']
+jackson = ['jackson-core', 'jackson-datatype-jsr310', 'jackson-datatype-jdk8']
 
 
 

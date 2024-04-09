@@ -42,10 +42,10 @@ public class FakeApiGatewayClient implements ApiGatewayClient {
 
     private List<RestApi> randomApis() {
         return List.of(RestApi.builder()
-                           .id(API_1)
+                           .name(API_1)
                            .build(),
                        RestApi.builder()
-                           .id(API_2)
+                           .name(API_2)
                            .build());
     }
 }

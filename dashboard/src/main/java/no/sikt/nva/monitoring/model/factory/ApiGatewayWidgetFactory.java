@@ -35,7 +35,7 @@ public class ApiGatewayWidgetFactory {
     }
 
     private static List<String> getApiIds(GetRestApisResponse page) {
-        return page.items().stream().map(RestApi::id).toList();
+        return page.items().stream().map(RestApi::name).toList();
     }
 
     private List<List<String>> createMetricList(String metricName) {

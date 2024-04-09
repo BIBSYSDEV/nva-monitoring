@@ -18,7 +18,8 @@ hamcrest = { strictly = '2.2' }
 aws-lambda-java-core = { group = 'com.amazonaws', name = 'aws-lambda-java-core', version.ref = 'awsLambdaCore' }
 aws-lambda-events = { group = 'com.amazonaws', name = 'aws-lambda-java-events', version.ref = 'awsLambdaEvents' }
 
-aws-cloudwatch = {group = 'software.amazon.awssdk', name = 'cloudwatch', version.ref = 'awsSdk2'}
+aws-cloudwatch = { group = 'software.amazon.awssdk', name = 'cloudwatch', version.ref = 'awsSdk2' }
+aws-apigateway = { group = 'software.amazon.awssdk', name = 'apigateway', version.ref = 'awsSdk2' }
 
 aws-lambda-log4j2 = { group = 'com.amazonaws', name = 'aws-lambda-java-log4j2', version.ref = 'awsLog4j2Version' }
 log4j-slf4j-impl = { group = 'org.apache.logging.log4j', name = 'log4j-slf4j2-impl', version.ref = 'log4j' }

@@ -4,8 +4,7 @@ import java.util.Objects;
 import no.unit.nva.commons.json.JsonSerializable;
 import nva.commons.core.JacocoGenerated;
 
-public record CloudWatchWidget<I>(String type, I properties, int height, int width, int x, int y)
-    implements JsonSerializable {
+public record CloudWatchWidget<I> (String type, I properties, int height, int width, int x, int y) implements JsonSerializable {
 
     @JacocoGenerated
     @Override

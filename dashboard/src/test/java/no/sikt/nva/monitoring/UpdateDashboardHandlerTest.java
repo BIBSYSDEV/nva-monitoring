@@ -2,6 +2,7 @@ package no.sikt.nva.monitoring;
 
 import static no.sikt.nva.monitoring.model.factory.AlarmWidgetFactory.ALARM;
 import static no.sikt.nva.monitoring.model.factory.AlarmWidgetFactory.ALARMS;
+import static no.sikt.nva.monitoring.model.factory.AlarmWidgetFactory.HEIGHT;
 import static no.sikt.nva.monitoring.model.factory.AlarmWidgetFactory.STATE_UPDATED_TIMESTAMP;
 import static no.sikt.nva.monitoring.model.factory.ApiGatewayWidgetFactory.API_NAME;
 import static no.sikt.nva.monitoring.model.factory.ApiGatewayWidgetFactory.AWS_API_GATEWAY;

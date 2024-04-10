@@ -14,7 +14,7 @@ public class ApiGatewayWidgetFactory {
     public static final String VIEW = "timeSeries";
     public static final String REGION = "eu-west-1";
     public static final boolean NOT_STACKED = false;
-    public static final int HEIGHT = 7;
+    public static final int HEIGHT = 9;
     public static final int WIDTH = 8;
     public static final int Y_COORDINATE = 8;
     public static final String AWS_API_GATEWAY = "AWS/ApiGateway";

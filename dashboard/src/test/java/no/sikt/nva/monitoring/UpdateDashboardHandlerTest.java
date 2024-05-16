@@ -2,7 +2,6 @@ package no.sikt.nva.monitoring;
 
 import static no.sikt.nva.monitoring.model.factory.AlarmWidgetFactory.ALARM;
 import static no.sikt.nva.monitoring.model.factory.AlarmWidgetFactory.ALARMS;
-import static no.sikt.nva.monitoring.model.factory.AlarmWidgetFactory.HEIGHT;
 import static no.sikt.nva.monitoring.model.factory.AlarmWidgetFactory.STATE_UPDATED_TIMESTAMP;
 import static no.sikt.nva.monitoring.model.factory.ApiGatewayWidgetFactory.API_NAME;
 import static no.sikt.nva.monitoring.model.factory.ApiGatewayWidgetFactory.AWS_API_GATEWAY;
@@ -12,6 +11,7 @@ import static no.sikt.nva.monitoring.model.factory.ApiGatewayWidgetFactory.TYPE;
 import static no.sikt.nva.monitoring.model.factory.ApiGatewayWidgetFactory.VIEW;
 import static no.sikt.nva.monitoring.utils.FakeApiGatewayClient.API_1;
 import static no.sikt.nva.monitoring.utils.FakeApiGatewayClient.API_2;
+import static no.sikt.nva.monitoring.utils.FakeApiGatewayClient.METRIC_WIDGET_OBJECT;
 import static no.sikt.nva.monitoring.utils.FakeCloudWatchClient.ALARM_ARN_1;
 import static no.sikt.nva.monitoring.utils.FakeCloudWatchClient.ALARM_ARN_2;
 import static org.hamcrest.Matchers.hasItem;
@@ -40,30 +40,37 @@ public class UpdateDashboardHandlerTest {
                              (List.of(List.of(AWS_API_GATEWAY,
                                               "5XXError",
                                               API_NAME,
-                                              API_1),
+                                              API_1,
+                                              METRIC_WIDGET_OBJECT),
                                       List.of(AWS_API_GATEWAY,
                                               "5XXError",
                                               API_NAME,
-                                              API_2))));
+                                              API_2,
+                                              METRIC_WIDGET_OBJECT))));
     public static final MetricProperties METRIC_PROPERTIES_4XX =
         new MetricProperties(VIEW, NOT_STACKED, REGION,
                              (List.of(List.of(AWS_API_GATEWAY,
                                               "4XXError",
                                               API_NAME,
-                                              API_1),
+                                              API_1,
+                                              METRIC_WIDGET_OBJECT),
                                       List.of(AWS_API_GATEWAY,
                                               "4XXError",
                                               API_NAME,
-                                              API_2))));
+                                              API_2,
+                                              METRIC_WIDGET_OBJECT))));
     public static final MetricProperties METRIC_PROPERTIES_COUNT = new MetricProperties(VIEW, NOT_STACKED, REGION,
                                                                                         (List.of(
                                                                                             List.of(AWS_API_GATEWAY,
                                                                                                     "Count",
                                                                                                     API_NAME,
-                                                                                                    API_1),
+                                                                                                    API_1,
+                                                                                                    METRIC_WIDGET_OBJECT),
                                                                                             List.of(AWS_API_GATEWAY,
                                                                                                     "Count",
-                                                                                                    API_NAME, API_2))));
+                                                                                                    API_NAME,
+                                                                                                    API_2,
+                                                                                                    METRIC_WIDGET_OBJECT))));
     private static final int IGNORED = 0;
     private static final Context mockContext = mock(Context.class);
     private static final CloudFormationCustomResourceEvent EVENT = CloudFormationCustomResourceEvent.builder().build();

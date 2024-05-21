@@ -14,8 +14,10 @@ import static no.sikt.nva.monitoring.utils.FakeApiGatewayClient.API_2;
 import static no.sikt.nva.monitoring.utils.FakeApiGatewayClient.METRIC_WIDGET_OBJECT;
 import static no.sikt.nva.monitoring.utils.FakeCloudWatchClient.ALARM_ARN_1;
 import static no.sikt.nva.monitoring.utils.FakeCloudWatchClient.ALARM_ARN_2;
+import static no.sikt.nva.monitoring.utils.FakeCloudWatchClient.ALARM_ARN_3;
 import static org.hamcrest.Matchers.hasItem;
 import static org.hamcrest.MatcherAssert.assertThat;
+import static org.hamcrest.Matchers.not;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.mockito.Mockito.mock;
 import com.amazonaws.services.lambda.runtime.Context;
@@ -106,17 +108,23 @@ public class UpdateDashboardHandlerTest {
     @Test
     void shouldUpdateDashboardWithAlarmsInWidgetList() throws JsonProcessingException {
         handler.handleRequest(EVENT, mockContext);
-        var dashboardBodyString = cloudWatchClient.getPutDashboardRequest().dashboardBody();
-        var dashboardBody = JsonUtils.dtoObjectMapper.readValue(dashboardBodyString, DashboardBody.class);
+        var dashboardBody = getDashboardBody();
         var expectedAlarmWidget = JsonUtils.dtoObjectMapper.readValue(EXPECTED_ALARM_WIDGET, CloudWatchWidget.class);
         assertThat(dashboardBody.widgets(), hasItem(expectedAlarmWidget));
     }
 
     @Test
+    void shouldUpdateDashboardAlarmsWithoutTargetTracking() throws JsonProcessingException {
+        handler.handleRequest(EVENT, mockContext);
+        var dashboardBody = getDashboardBody();
+        var alarms = getAlarmArns(dashboardBody);
+        assertThat(alarms, not(hasItem(ALARM_ARN_3)));
+    }
+
+    @Test
     void shouldUpdateDashboardWith5xxErrorsForApis() throws JsonProcessingException {
         handler.handleRequest(EVENT, mockContext);
-        var dashboardBodyString = cloudWatchClient.getPutDashboardRequest().dashboardBody();
-        var dashboardBody = JsonUtils.dtoObjectMapper.readValue(dashboardBodyString, DashboardBody.class);
+        var dashboardBody = getDashboardBody();
         var expectedApigateway5xxErrors = JsonUtils.dtoObjectMapper.readValue(EXPECTED_5XX_WIDGET,
                                                                               CloudWatchWidget.class);
         assertThat(dashboardBody.widgets(), hasItem(expectedApigateway5xxErrors));
@@ -125,8 +133,7 @@ public class UpdateDashboardHandlerTest {
     @Test
     void shouldUpdateDashboardWith4xxErrorsForApis() throws JsonProcessingException {
         handler.handleRequest(EVENT, mockContext);
-        var dashboardBodyString = cloudWatchClient.getPutDashboardRequest().dashboardBody();
-        var dashboardBody = JsonUtils.dtoObjectMapper.readValue(dashboardBodyString, DashboardBody.class);
+        var dashboardBody = getDashboardBody();
         var expectedApigateway4xxErrors = JsonUtils.dtoObjectMapper.readValue(EXPECTED_4XX_WIDGET,
                                                                               CloudWatchWidget.class);
         assertThat(dashboardBody.widgets(), hasItem(expectedApigateway4xxErrors));
@@ -135,10 +142,25 @@ public class UpdateDashboardHandlerTest {
     @Test
     void shouldUpdateDashboardWithCountApiGetewayApis() throws JsonProcessingException {
         handler.handleRequest(EVENT, mockContext);
-        var dashboardBodyString = cloudWatchClient.getPutDashboardRequest().dashboardBody();
-        var dashboardBody = JsonUtils.dtoObjectMapper.readValue(dashboardBodyString, DashboardBody.class);
+        var dashboardBody = getDashboardBody();
         var expectedApigatewayCountWidget = JsonUtils.dtoObjectMapper.readValue(EXPECTED_API_GATEWAY_COUNT_WIDGET,
                                                                                 CloudWatchWidget.class);
         assertThat(dashboardBody.widgets(), hasItem(expectedApigatewayCountWidget));
+    }
+
+    private static List<String> getAlarmArns(DashboardBody dashboardBody) {
+        return dashboardBody.widgets()
+                   .stream()
+                   .filter(widget -> widget.type().equals(ALARM))
+                   .map(alarmWidget -> JsonUtils.dtoObjectMapper.convertValue(alarmWidget.properties(),
+                                                                           AlarmProperties.class))
+                   .map(AlarmProperties::alarms)
+                   .flatMap(List::stream)
+                   .toList();
+    }
+
+    private DashboardBody getDashboardBody() throws JsonProcessingException {
+        var dashboardBodyString = cloudWatchClient.getPutDashboardRequest().dashboardBody();
+        return JsonUtils.dtoObjectMapper.readValue(dashboardBodyString, DashboardBody.class);
     }
 }

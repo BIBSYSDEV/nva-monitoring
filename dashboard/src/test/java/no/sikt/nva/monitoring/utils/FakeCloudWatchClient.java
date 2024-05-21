@@ -11,6 +11,8 @@ public class FakeCloudWatchClient implements CloudWatchClient {
 
     public static final String ALARM_ARN_1 = "arn:aws:cloudwatch:eu-west-1:some-account:alarm:some-alarm-1";
     public static final String ALARM_ARN_2 = "arn:aws:cloudwatch:eu-west-1:some-account:alarm:some-alarm-2";
+    public static final String ALARM_ARN_3 = "arn:aws:cloudwatch:eu-west-1:some-account:alarm:TargetTracking-function"
+                                             + ":some-alarm-3";
 
     private PutDashboardRequest putDashboardRequest;
 
@@ -18,7 +20,8 @@ public class FakeCloudWatchClient implements CloudWatchClient {
     public DescribeAlarmsResponse describeAlarms() {
         return DescribeAlarmsResponse
                    .builder()
-                   .metricAlarms(MetricAlarm.builder().alarmArn(ALARM_ARN_1).build())
+                   .metricAlarms(MetricAlarm.builder().alarmArn(ALARM_ARN_1).build(),
+                                 MetricAlarm.builder().alarmArn(ALARM_ARN_3).build())
                    .compositeAlarms(CompositeAlarm.builder().alarmArn(ALARM_ARN_2).build())
                    .build();
     }

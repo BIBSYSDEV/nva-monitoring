@@ -3,15 +3,12 @@ package no.sikt.nva.monitoring;
 import com.amazonaws.services.lambda.runtime.Context;
 import com.amazonaws.services.lambda.runtime.RequestHandler;
 import com.amazonaws.services.lambda.runtime.events.CloudFormationCustomResourceEvent;
-import java.util.ArrayList;
-import java.util.Comparator;
 import java.util.List;
 import no.sikt.nva.monitoring.model.CloudWatchWidget;
 import no.sikt.nva.monitoring.model.DashboardBody;
-import no.sikt.nva.monitoring.model.LogProperties;
-import no.sikt.nva.monitoring.model.LogQuery;
 import no.sikt.nva.monitoring.model.factory.AlarmWidgetFactory;
 import no.sikt.nva.monitoring.model.factory.ApiGatewayWidgetFactory;
+import no.sikt.nva.monitoring.model.factory.LogWidgetFactory;
 import nva.commons.core.Environment;
 import nva.commons.core.JacocoGenerated;
 import software.amazon.awssdk.regions.Region;
@@ -19,11 +16,7 @@ import software.amazon.awssdk.services.apigateway.ApiGatewayClient;
 import software.amazon.awssdk.services.cloudwatch.CloudWatchClient;
 import software.amazon.awssdk.services.cloudwatch.model.PutDashboardRequest;
 import software.amazon.awssdk.services.cloudwatchlogs.CloudWatchLogsClient;
-import software.amazon.awssdk.services.cloudwatchlogs.model.DescribeLogGroupsRequest;
-import software.amazon.awssdk.services.cloudwatchlogs.model.LogGroup;
 import software.amazon.awssdk.services.lambda.LambdaClient;
-import software.amazon.awssdk.services.lambda.model.FunctionConfiguration;
-import software.amazon.awssdk.services.lambda.model.ListFunctionsRequest;
 
 public class UpdateDashboardHandler implements RequestHandler<CloudFormationCustomResourceEvent, Void> {
 
@@ -74,7 +67,14 @@ public class UpdateDashboardHandler implements RequestHandler<CloudFormationCust
         var apiGateway5xxWidget = apigatewayFactory.creatCloudWatchWidget(0, "5XXError");
         var apiGateway4xxWidget = apigatewayFactory.creatCloudWatchWidget(1, "4XXError");
         var apiGatewayCountWidget = apigatewayFactory.creatCloudWatchWidget(2, "Count");
-        var logWidget = LogProperties.create(lambdaClient, cloudWatchLogsClient);
-        return List.of(alarmWidget, apiGateway5xxWidget, apiGateway4xxWidget, apiGatewayCountWidget, logWidget);
+        var logWidgetFactory = new LogWidgetFactory(cloudWatchLogsClient, lambdaClient);
+        var log5xxWidget = logWidgetFactory.createLogWidget("5XX Error log", "filter @message like /\\b5\\d{2}\\b/");
+        var log4xxWidget = logWidgetFactory.createLogWidget("4XX Error log", "filter @message like /\\b4\\d{2}\\b/");
+        return List.of(alarmWidget,
+                       apiGateway5xxWidget,
+                       apiGateway4xxWidget,
+                       apiGatewayCountWidget,
+                       log5xxWidget,
+                       log4xxWidget);
     }
 }

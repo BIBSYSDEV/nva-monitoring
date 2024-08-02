@@ -84,7 +84,7 @@ public class UpdateDashboardHandlerTest {
         TYPE, METRIC_PROPERTIES_COUNT, IGNORED, IGNORED, IGNORED, IGNORED).toJsonString();
     public static final String EXPECTED_LOG_QUERY =
         "SOURCE 'testLogGroup' | filter @message like /\\b5\\d{2}\\b/ | fields @timestamp, @message, @logStream, @log "
-        + "| sort @timestamp desc | limit 10000";
+        + "| sort @timestamp desc | limit 100";
     private UpdateDashboardHandler handler;
     private FakeCloudWatchClient cloudWatchClient;
     private FakeApiGatewayClient apiGatewayClient;

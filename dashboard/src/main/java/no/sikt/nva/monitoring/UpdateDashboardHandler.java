@@ -80,37 +80,12 @@ public class UpdateDashboardHandler implements RequestHandler<CloudFormationCust
 
     private CloudWatchWidget<LogProperties> createCloudWatchLogWidget() {
 
-        var functions = fetchLamdaFunctions();
-        var logGroups = new ArrayList<String>();
-        for (FunctionConfiguration function : functions) {
-
-            var logGroupsRequest = DescribeLogGroupsRequest.builder()
-                                       .logGroupNamePrefix("/aws/lambda/" + function.functionName())
-                                       .build();
-
-            cloudWatchLogsClient.describeLogGroups(logGroupsRequest).logGroups().stream()
-                .max(Comparator.comparing(LogGroup::creationTime))
-                .map(LogGroup::logGroupName)
-                .map(logGroups::add);
-        }
-
-        var query = LogQuery.builder()
-                        .withLogGroups(logGroups)
-                        .withFilter("filter @message like /5\\d{2}/")
-                        .withFields("fields @timestamp, @message, @logStream, @log")
-                        .withSort("sort @timestamp desc")
-                        .withLimit("limit 10000")
-                        .build();
         return LogProperties.builder()
                    .withRegion(Region.EU_WEST_1.toString())
                    .withTitle("5XX Error log")
                    .withView("table")
                    .withQuery(query.constructQuery())
                    .build()
-                   .toCloudWatchWidget();
-    }
-
-    private List<FunctionConfiguration> fetchLamdaFunctions() {
-        return lambdaClient.listFunctions(ListFunctionsRequest.builder().build()).functions();
+                   .toCloudWatchWidget(lambdaClient, cloudWatchLogsClient);
     }
 }

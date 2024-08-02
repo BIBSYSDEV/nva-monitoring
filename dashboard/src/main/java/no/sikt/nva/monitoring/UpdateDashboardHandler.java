@@ -74,18 +74,7 @@ public class UpdateDashboardHandler implements RequestHandler<CloudFormationCust
         var apiGateway5xxWidget = apigatewayFactory.creatCloudWatchWidget(0, "5XXError");
         var apiGateway4xxWidget = apigatewayFactory.creatCloudWatchWidget(1, "4XXError");
         var apiGatewayCountWidget = apigatewayFactory.creatCloudWatchWidget(2, "Count");
-        var logWidget = createCloudWatchLogWidget();
+        var logWidget = LogProperties.create(lambdaClient, cloudWatchLogsClient);
         return List.of(alarmWidget, apiGateway5xxWidget, apiGateway4xxWidget, apiGatewayCountWidget, logWidget);
-    }
-
-    private CloudWatchWidget<LogProperties> createCloudWatchLogWidget() {
-
-        return LogProperties.builder()
-                   .withRegion(Region.EU_WEST_1.toString())
-                   .withTitle("5XX Error log")
-                   .withView("table")
-                   .withQuery(query.constructQuery())
-                   .build()
-                   .toCloudWatchWidget(lambdaClient, cloudWatchLogsClient);
     }
 }

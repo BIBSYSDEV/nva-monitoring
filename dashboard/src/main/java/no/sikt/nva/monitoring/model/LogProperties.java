@@ -3,6 +3,7 @@ package no.sikt.nva.monitoring.model;
 import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.List;
+import software.amazon.awssdk.regions.Region;
 import software.amazon.awssdk.services.cloudwatchlogs.CloudWatchLogsClient;
 import software.amazon.awssdk.services.cloudwatchlogs.model.DescribeLogGroupsRequest;
 import software.amazon.awssdk.services.cloudwatchlogs.model.LogGroup;
@@ -14,11 +15,17 @@ public record LogProperties(String region, String title, String query, String vi
 
     public static final String LOG = "log";
 
-    public CloudWatchWidget<LogProperties> toCloudWatchWidget(LambdaClient lambdaClient,
-                                                              CloudWatchLogsClient cloudWatchLogsClient) {
+    public static CloudWatchWidget<LogProperties> create(LambdaClient lambdaClient,
+                                                         CloudWatchLogsClient cloudWatchLogsClient) {
         var logGroups = fetchNewestLambdaLogGroups(lambdaClient, cloudWatchLogsClient);
         var query = constructQueryForLogGroups(logGroups);
-        return new CloudWatchWidget<>(LOG, this, 6, 12, 12, 24);
+        var logProperties = LogProperties.builder()
+            .withRegion(Region.EU_WEST_1.toString())
+            .withTitle("5XX Error log")
+            .withView("table")
+            .withQuery(query)
+            .build();
+        return new CloudWatchWidget<>(LOG, logProperties, 6, 12, 12, 24);
     }
 
     private static String constructQueryForLogGroups(ArrayList<String> logGroups) {
@@ -31,7 +38,8 @@ public record LogProperties(String region, String title, String query, String vi
                         .build().constructQuery();
     }
 
-    private ArrayList<String> fetchNewestLambdaLogGroups(LambdaClient lambdaClient, CloudWatchLogsClient cloudWatchLogsClient) {
+    private static ArrayList<String> fetchNewestLambdaLogGroups(LambdaClient lambdaClient,
+                                                          CloudWatchLogsClient cloudWatchLogsClient) {
         var functions = fetchLamdaFunctions(lambdaClient);
         var logGroups = new ArrayList<String>();
         for (FunctionConfiguration function : functions) {
@@ -48,7 +56,7 @@ public record LogProperties(String region, String title, String query, String vi
         return logGroups;
     }
 
-    private List<FunctionConfiguration> fetchLamdaFunctions(LambdaClient lambdaClient) {
+    private static List<FunctionConfiguration> fetchLamdaFunctions(LambdaClient lambdaClient) {
         return lambdaClient.listFunctions(ListFunctionsRequest.builder().build()).functions();
     }
 

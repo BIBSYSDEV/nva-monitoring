@@ -164,7 +164,7 @@ public class UpdateDashboardHandlerTest {
         var expectedCloudWatchLogsWidget = new CloudWatchWidget<>(
             "log", LogProperties.builder()
                        .withRegion("eu-west-1")
-                       .withTitle("5XX ApiGateway Error log")
+                       .withTitle("5XX API Gateway Error logs")
                        .withView("table")
                        .withQuery(EXPECTED_LOG_QUERY)
                        .build(), 6, 12, 12, 24).toJsonString();

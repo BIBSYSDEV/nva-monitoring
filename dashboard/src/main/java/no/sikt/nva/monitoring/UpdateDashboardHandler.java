@@ -22,8 +22,8 @@ public class UpdateDashboardHandler implements RequestHandler<CloudFormationCust
         "filter @message like /\"status\"\\s*:\\s*\"5\\d{2}\"/";
     public static final String FILTER_FOR_4XX_ERRORS =
         "filter @message like /\"status\"\\s*:\\s*\"4\\d{2}\"/";
-    public static final String API_GATEWAY_5XX_ERROR_LOG = "5XX ApiGateway Error log";
-    public static final String API_GATEWAY_4XX_ERROR_LOG = "4XX ApiGateway Error log";
+    public static final String API_GATEWAY_5XX_ERROR_LOG = "5XX API Gateway Error logs";
+    public static final String API_GATEWAY_4XX_ERROR_LOG = "4XX API Gateway Error logs";
     private final CloudWatchClient cloudWatchClient;
     private final CloudWatchLogsClient cloudWatchLogsClient;
     private final String dashboardName;

@@ -1,6 +1,6 @@
 package no.sikt.nva.monitoring.model.factory;
 
-import java.util.ArrayList;
+import java.util.Collection;
 import java.util.Comparator;
 import java.util.List;
 import no.sikt.nva.monitoring.model.CloudWatchWidget;
@@ -18,56 +18,61 @@ public class LogWidgetFactory {
 
     public static final String LOG = "log";
     public static final String AWS_LAMBDA_LOG_GROUP_PREFIX = "/aws/lambda/";
-    private final List<String> logGroups;
+    public static final String TABLE_VIEW = "table";
+    public static final String LIMIT_100 = "limit 100";
+    public static final String SORT_TIMESTAMP_DESC = "sort @timestamp desc";
+    public static final String DEFAULT_FIELDS = "fields @timestamp, @message, @logStream, @log";
+    private final CloudWatchLogsClient cloudWatchLogsClient;
+    private final LambdaClient lambdaClient;
 
     public LogWidgetFactory(CloudWatchLogsClient cloudWatchLogsClient, LambdaClient lambdaClient) {
-        this.logGroups = fetchNewestLambdaLogGroups(lambdaClient, cloudWatchLogsClient);
+        this.cloudWatchLogsClient = cloudWatchLogsClient;
+        this.lambdaClient = lambdaClient;
     }
 
     public CloudWatchWidget<LogProperties> createLogWidget(String title, String filter) {
-        var query = constructQueryForLogGroups(logGroups, filter);
-        var logProperties = LogProperties.builder()
-                                .withRegion(Region.EU_WEST_1.toString())
-                                .withTitle(title)
-                                .withView("table")
-                                .withQuery(query)
-                                .build();
-        return new CloudWatchWidget<>(LOG, logProperties, 6, 24, 12, 24);
+        var logGroups = fetchNewestLambdaLogGroups();
+        var query = constructQueryForLogGroupsWithFilter(logGroups, filter);
+        return new CloudWatchWidget<>(LOG, constructLogProperties(title, query), 6, 24, 12, 24);
     }
 
-    private static String constructQueryForLogGroups(List<String> logGroups, String filter) {
-        return LogQuery.builder()
-                   .withLogGroups(logGroups)
-                   .withFilter(filter)
-                   .withFields("fields @timestamp, @message, @logStream, @log")
-                   .withSort("sort @timestamp desc")
-                   .withLimit("limit 100")
-                   .build().constructQuery();
-    }
-
-    private static ArrayList<String> fetchNewestLambdaLogGroups(LambdaClient lambdaClient,
-                                                                CloudWatchLogsClient cloudWatchLogsClient) {
-        var lambdaFunctionNames = fetchLamdaFunctions(lambdaClient);
-        var logGroups = new ArrayList<String>();
-        for (String functionName : lambdaFunctionNames) {
-
-            var logGroupsRequest = createDescribeLambdaLogGroupsRequest(functionName);
-
-            cloudWatchLogsClient.describeLogGroups(logGroupsRequest).logGroups().stream()
-                .max(Comparator.comparing(LogGroup::creationTime))
-                .map(LogGroup::logGroupName)
-                .map(logGroups::add);
-        }
-        return logGroups;
-    }
-
-    private static DescribeLogGroupsRequest createDescribeLambdaLogGroupsRequest(String functionName) {
-        return DescribeLogGroupsRequest.builder()
-                   .logGroupNamePrefix(AWS_LAMBDA_LOG_GROUP_PREFIX + functionName)
+    private static LogProperties constructLogProperties(String title, String query) {
+        return LogProperties.builder()
+                   .withRegion(Region.EU_WEST_1.toString())
+                   .withTitle(title)
+                   .withView(TABLE_VIEW)
+                   .withQuery(query)
                    .build();
     }
 
-    private static List<String> fetchLamdaFunctions(LambdaClient lambdaClient) {
+    private static String constructQueryForLogGroupsWithFilter(List<String> logGroups, String filter) {
+        return LogQuery.builder()
+                   .withLogGroups(logGroups)
+                   .withFilter(filter)
+                   .withFields(DEFAULT_FIELDS)
+                   .withSort(SORT_TIMESTAMP_DESC)
+                   .withLimit(LIMIT_100)
+                   .build()
+                   .constructQuery();
+    }
+
+    private  List<String> fetchNewestLambdaLogGroups() {
+        return fetchLamdaFunctionNames().stream()
+                   .map(this::fetchLogGroupsForFunction)
+                   .flatMap(Collection::stream)
+                   .max(Comparator.comparing(LogGroup::creationTime))
+                   .map(LogGroup::logGroupName)
+                   .stream().toList();
+    }
+
+    private List<LogGroup> fetchLogGroupsForFunction(String functionName) {
+        var request = DescribeLogGroupsRequest.builder()
+                   .logGroupNamePrefix(AWS_LAMBDA_LOG_GROUP_PREFIX + functionName)
+                   .build();
+        return cloudWatchLogsClient.describeLogGroups(request).logGroups();
+    }
+
+    private List<String> fetchLamdaFunctionNames() {
         return lambdaClient.listFunctions(ListFunctionsRequest.builder().build())
                    .functions()
                    .stream()

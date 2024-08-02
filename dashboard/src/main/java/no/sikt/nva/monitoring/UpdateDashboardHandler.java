@@ -20,6 +20,10 @@ import software.amazon.awssdk.services.lambda.LambdaClient;
 
 public class UpdateDashboardHandler implements RequestHandler<CloudFormationCustomResourceEvent, Void> {
 
+    public static final String FILTER_FOR_5XX_ERRORS =
+        "filter @message like /(^|\\s)5\\d{2}($|\\s)/ and @message like /ERROR/";
+    public static final String FILTER_FOR_4XX_ERRORS =
+        "filter @message like /(^|\\s)4\\d{2}($|\\s)/ and @message like /ERROR/";
     private final CloudWatchClient cloudWatchClient;
     private final CloudWatchLogsClient cloudWatchLogsClient;
     private final LambdaClient lambdaClient;
@@ -68,8 +72,8 @@ public class UpdateDashboardHandler implements RequestHandler<CloudFormationCust
         var apiGateway4xxWidget = apigatewayFactory.creatCloudWatchWidget(1, "4XXError");
         var apiGatewayCountWidget = apigatewayFactory.creatCloudWatchWidget(2, "Count");
         var logWidgetFactory = new LogWidgetFactory(cloudWatchLogsClient, lambdaClient);
-        var log5xxWidget = logWidgetFactory.createLogWidget("5XX Error log", "filter @message like /\\b5\\d{2}\\b/");
-        var log4xxWidget = logWidgetFactory.createLogWidget("4XX Error log", "filter @message like /\\b4\\d{2}\\b/");
+        var log5xxWidget = logWidgetFactory.createLogWidget("5XX Error log", FILTER_FOR_5XX_ERRORS);
+        var log4xxWidget = logWidgetFactory.createLogWidget("4XX Error log", FILTER_FOR_4XX_ERRORS);
         return List.of(alarmWidget,
                        apiGateway5xxWidget,
                        apiGateway4xxWidget,

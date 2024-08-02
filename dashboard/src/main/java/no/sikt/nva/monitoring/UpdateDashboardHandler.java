@@ -26,7 +26,6 @@ public class UpdateDashboardHandler implements RequestHandler<CloudFormationCust
         "filter @message like /\"status\"\\s*:\\s*\"4\\d{2}\"/";
     private final CloudWatchClient cloudWatchClient;
     private final CloudWatchLogsClient cloudWatchLogsClient;
-    private final LambdaClient lambdaClient;
     private final String dashboardName;
     private final ApiGatewayClient apiGatewayClient;
 
@@ -36,17 +35,15 @@ public class UpdateDashboardHandler implements RequestHandler<CloudFormationCust
                  .region(Region.EU_WEST_1)
                  .build(),
              ApiGatewayClient.create(),
-             CloudWatchLogsClient.create(),
-             LambdaClient.create());
+             CloudWatchLogsClient.create());
     }
 
     public UpdateDashboardHandler(CloudWatchClient cloudWatchClient, ApiGatewayClient apiGatewayClient,
-                                  CloudWatchLogsClient cloudWatchLogsClient, LambdaClient lambdaClient) {
+                                  CloudWatchLogsClient cloudWatchLogsClient) {
         this.cloudWatchClient = cloudWatchClient;
         this.dashboardName = new Environment().readEnv("DASHBOARD_NAME");
         this.apiGatewayClient = apiGatewayClient;
         this.cloudWatchLogsClient = cloudWatchLogsClient;
-        this.lambdaClient = lambdaClient;
     }
 
     @Override
@@ -71,7 +68,7 @@ public class UpdateDashboardHandler implements RequestHandler<CloudFormationCust
         var apiGateway5xxWidget = apigatewayFactory.creatCloudWatchWidget(0, "5XXError");
         var apiGateway4xxWidget = apigatewayFactory.creatCloudWatchWidget(1, "4XXError");
         var apiGatewayCountWidget = apigatewayFactory.creatCloudWatchWidget(2, "Count");
-        var logWidgetFactory = new LogWidgetFactory(cloudWatchLogsClient, lambdaClient);
+        var logWidgetFactory = new LogWidgetFactory(cloudWatchLogsClient);
         var log5xxWidget = logWidgetFactory.createLogWidget("5XX ApiGateway Error log", FILTER_FOR_5XX_ERRORS);
         var log4xxWidget = logWidgetFactory.createLogWidget("4XX ApiGateway Error log", FILTER_FOR_4XX_ERRORS);
         return List.of(alarmWidget,

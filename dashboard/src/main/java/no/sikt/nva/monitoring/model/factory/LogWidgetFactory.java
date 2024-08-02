@@ -1,7 +1,7 @@
 package no.sikt.nva.monitoring.model.factory;
 
-import java.util.Collection;
-import java.util.Comparator;
+import static java.util.Objects.nonNull;
+import java.util.ArrayList;
 import java.util.List;
 import no.sikt.nva.monitoring.model.CloudWatchWidget;
 import no.sikt.nva.monitoring.model.LogProperties;
@@ -10,31 +10,38 @@ import software.amazon.awssdk.regions.Region;
 import software.amazon.awssdk.services.cloudwatchlogs.CloudWatchLogsClient;
 import software.amazon.awssdk.services.cloudwatchlogs.model.DescribeLogGroupsRequest;
 import software.amazon.awssdk.services.cloudwatchlogs.model.LogGroup;
-import software.amazon.awssdk.services.lambda.LambdaClient;
-import software.amazon.awssdk.services.lambda.model.FunctionConfiguration;
-import software.amazon.awssdk.services.lambda.model.ListFunctionsRequest;
 
 public class LogWidgetFactory {
 
     public static final String LOG = "log";
-    public static final String AWS_LAMBDA_LOG_GROUP_PREFIX = "/aws/lambda/";
     public static final String TABLE_VIEW = "table";
     public static final String LIMIT_100 = "limit 100";
     public static final String SORT_TIMESTAMP_DESC = "sort @timestamp desc";
     public static final String DEFAULT_FIELDS = "fields @timestamp, @message, @logStream, @log";
-    public static final String API_ACCESS_LOG_GROUP = "ApiAccessLogGroup";
+    public static final String MASTER_PIPELINES = "master-pipelines";
+    public static final String API_ACCESS_LOG_GROUP_NAME_PATTERN = "*ApiAccessLogGroup*";
     private final CloudWatchLogsClient cloudWatchLogsClient;
-    private final LambdaClient lambdaClient;
 
-    public LogWidgetFactory(CloudWatchLogsClient cloudWatchLogsClient, LambdaClient lambdaClient) {
+    public LogWidgetFactory(CloudWatchLogsClient cloudWatchLogsClient) {
         this.cloudWatchLogsClient = cloudWatchLogsClient;
-        this.lambdaClient = lambdaClient;
     }
 
     public CloudWatchWidget<LogProperties> createLogWidget(String title, String filter) {
-        var logGroups = fetchNewestLambdaLogGroups();
+        var logGroups = fetchApiGatewayLogGroups();
         var query = constructQueryForLogGroupsWithFilter(logGroups, filter);
         return new CloudWatchWidget<>(LOG, constructLogProperties(title, query), 6, 24, 12, 24);
+    }
+
+    public List<String> fetchApiGatewayLogGroups() {
+        String nextToken = null;
+        var allLogGroups = new ArrayList<LogGroup>();
+        do {
+            var request = listLogGroupRequestWithNamePattern(nextToken);
+            var response = cloudWatchLogsClient.describeLogGroups(request);
+            allLogGroups.addAll(response.logGroups());
+            nextToken = response.nextToken();
+        } while (nonNull(nextToken));
+        return keepMasterLogGroupsOnly(allLogGroups);
     }
 
     private static LogProperties constructLogProperties(String title, String query) {
@@ -57,27 +64,17 @@ public class LogWidgetFactory {
                    .constructQuery();
     }
 
-    private  List<String> fetchNewestLambdaLogGroups() {
-        return fetchLamdaFunctionNames().stream()
-                   .map(this::fetchApiGatewayLogGroupsForFunction)
-                   .flatMap(Collection::stream)
-                   .max(Comparator.comparing(LogGroup::creationTime))
+    private static List<String> keepMasterLogGroupsOnly(ArrayList<LogGroup> allLogGroups) {
+        return allLogGroups.stream()
                    .map(LogGroup::logGroupName)
-                   .stream().toList();
-    }
-
-    private List<LogGroup> fetchApiGatewayLogGroupsForFunction(String functionName) {
-        var request = DescribeLogGroupsRequest.builder().build();
-        return cloudWatchLogsClient.describeLogGroups(request).logGroups().stream()
-                   .filter(logGroup -> logGroup.logGroupName().contains(API_ACCESS_LOG_GROUP))
+                   .filter(logGroup -> logGroup.contains(MASTER_PIPELINES))
                    .toList();
     }
 
-    private List<String> fetchLamdaFunctionNames() {
-        return lambdaClient.listFunctions(ListFunctionsRequest.builder().build())
-                   .functions()
-                   .stream()
-                   .map(FunctionConfiguration::functionName)
-                   .toList();
+    private static DescribeLogGroupsRequest listLogGroupRequestWithNamePattern(String nextToken) {
+        return DescribeLogGroupsRequest.builder()
+                   .logGroupNamePattern(API_ACCESS_LOG_GROUP_NAME_PATTERN)
+                   .nextToken(nextToken)
+                   .build();
     }
 }

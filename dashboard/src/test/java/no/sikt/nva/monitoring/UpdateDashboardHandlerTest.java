@@ -41,10 +41,6 @@ import software.amazon.awssdk.services.cloudwatchlogs.CloudWatchLogsClient;
 import software.amazon.awssdk.services.cloudwatchlogs.model.DescribeLogGroupsRequest;
 import software.amazon.awssdk.services.cloudwatchlogs.model.DescribeLogGroupsResponse;
 import software.amazon.awssdk.services.cloudwatchlogs.model.LogGroup;
-import software.amazon.awssdk.services.lambda.LambdaClient;
-import software.amazon.awssdk.services.lambda.model.FunctionConfiguration;
-import software.amazon.awssdk.services.lambda.model.ListFunctionsRequest;
-import software.amazon.awssdk.services.lambda.model.ListFunctionsResponse;
 
 public class UpdateDashboardHandlerTest {
 
@@ -83,7 +79,7 @@ public class UpdateDashboardHandlerTest {
     private static final String EXPECTED_API_GATEWAY_COUNT_WIDGET = new CloudWatchWidget<>(
         TYPE, METRIC_PROPERTIES_COUNT, IGNORED, IGNORED, IGNORED, IGNORED).toJsonString();
     public static final String EXPECTED_LOG_QUERY =
-        "SOURCE 'testLogGroup-ApiAccessLogGroup' "
+        "SOURCE 'master-pipelines-testLogGroup-ApiAccessLogGroup' "
         + "| filter @message like /\"status\"\\s*:\\s*\"5\\d{2}\"/ "
         + "| fields @timestamp, @message, @logStream, @log "
         + "| sort @timestamp desc "
@@ -92,37 +88,28 @@ public class UpdateDashboardHandlerTest {
     private FakeCloudWatchClient cloudWatchClient;
     private FakeApiGatewayClient apiGatewayClient;
     private CloudWatchLogsClient cloudWatchLogsClient;
-    private LambdaClient lambdaClient;
 
     @BeforeEach
     void init() {
         cloudWatchClient = new FakeCloudWatchClient();
         apiGatewayClient = new FakeApiGatewayClient();
-        lambdaClient = mockedLambdaClient();
         cloudWatchLogsClient = mockedCloudWatchLogsClient();
-        handler = new UpdateDashboardHandler(cloudWatchClient, apiGatewayClient, cloudWatchLogsClient, lambdaClient);
+        handler = new UpdateDashboardHandler(cloudWatchClient, apiGatewayClient, cloudWatchLogsClient);
     }
 
     private CloudWatchLogsClient mockedCloudWatchLogsClient() {
         cloudWatchLogsClient = mock(CloudWatchLogsClient.class);
         when(cloudWatchLogsClient.describeLogGroups((DescribeLogGroupsRequest) any()))
-            .thenReturn(DescribeLogGroupsResponse.builder().logGroups(
-                List.of(LogGroup.builder().creationTime(10L).logGroupName("testLogGroup-ApiAccessLogGroup").build())).build());
+            .thenReturn(DescribeLogGroupsResponse.builder().nextToken(null).logGroups(
+                List.of(LogGroup.builder().creationTime(10L)
+                            .logGroupName("master-pipelines-testLogGroup-ApiAccessLogGroup").build())).build());
         return cloudWatchLogsClient;
-    }
-
-    private LambdaClient mockedLambdaClient() {
-        lambdaClient = mock(LambdaClient.class);
-        when(lambdaClient.listFunctions((ListFunctionsRequest) any()))
-            .thenReturn(ListFunctionsResponse.builder().functions(List.of(FunctionConfiguration.builder().functionName(
-                "testFunction").build())).build());
-        return lambdaClient;
     }
 
     @Test
     void shouldThrowExceptionWhenCloudWatchClientThrowsException() {
         handler = new UpdateDashboardHandler(new FakeCloudWatchClientThrowingException(), apiGatewayClient,
-                                             cloudWatchLogsClient, lambdaClient);
+                                             cloudWatchLogsClient);
         assertThrows(Exception.class, () -> handler.handleRequest(EVENT,
                                                                   mockContext));
     }
@@ -171,7 +158,7 @@ public class UpdateDashboardHandlerTest {
     }
 
     @Test
-    void shouldUpdateDashboardWithCloudWatchLogWidget() throws JsonProcessingException {
+    void shouldUpdateDashboardWithCloudWatchApiGatewayMasterPipelineLogs() throws JsonProcessingException {
         handler.handleRequest(EVENT, mockContext);
         var dashboardBody = getDashboardBody();
         var expectedCloudWatchLogsWidget = new CloudWatchWidget<>(

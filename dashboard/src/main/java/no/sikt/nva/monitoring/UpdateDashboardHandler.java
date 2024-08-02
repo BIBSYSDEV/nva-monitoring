@@ -1,9 +1,12 @@
-package no.sikt.nva.monitoring.model;
+package no.sikt.nva.monitoring;
 
 import com.amazonaws.services.lambda.runtime.Context;
 import com.amazonaws.services.lambda.runtime.RequestHandler;
 import com.amazonaws.services.lambda.runtime.events.CloudFormationCustomResourceEvent;
 import java.util.List;
+import no.sikt.nva.monitoring.model.CloudWatchWidget;
+import no.sikt.nva.monitoring.model.DashboardBody;
+import no.sikt.nva.monitoring.model.LogProperties;
 import no.sikt.nva.monitoring.model.factory.AlarmWidgetFactory;
 import no.sikt.nva.monitoring.model.factory.ApiGatewayWidgetFactory;
 import nva.commons.core.Environment;

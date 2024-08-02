@@ -28,7 +28,6 @@ import no.sikt.nva.monitoring.model.AlarmProperties;
 import no.sikt.nva.monitoring.model.CloudWatchWidget;
 import no.sikt.nva.monitoring.model.DashboardBody;
 import no.sikt.nva.monitoring.model.MetricProperties;
-import no.sikt.nva.monitoring.model.UpdateDashboardHandler;
 import no.sikt.nva.monitoring.utils.FakeApiGatewayClient;
 import no.sikt.nva.monitoring.utils.FakeCloudWatchClient;
 import no.sikt.nva.monitoring.utils.FakeCloudWatchClientThrowingException;

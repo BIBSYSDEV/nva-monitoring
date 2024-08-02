@@ -83,8 +83,8 @@ public class UpdateDashboardHandlerTest {
     private static final String EXPECTED_API_GATEWAY_COUNT_WIDGET = new CloudWatchWidget<>(
         TYPE, METRIC_PROPERTIES_COUNT, IGNORED, IGNORED, IGNORED, IGNORED).toJsonString();
     public static final String EXPECTED_LOG_QUERY =
-        "SOURCE 'testLogGroup' "
-        + "| filter @message like /(^|\\s)5\\d{2}($|\\s)/ and @message like /ERROR/ "
+        "SOURCE 'testLogGroup-ApiAccessLogGroup' "
+        + "| filter @message like /\"status\"\\s*:\\s*\"5\\d{2}\"/ "
         + "| fields @timestamp, @message, @logStream, @log "
         + "| sort @timestamp desc "
         + "| limit 100";
@@ -107,7 +107,7 @@ public class UpdateDashboardHandlerTest {
         cloudWatchLogsClient = mock(CloudWatchLogsClient.class);
         when(cloudWatchLogsClient.describeLogGroups((DescribeLogGroupsRequest) any()))
             .thenReturn(DescribeLogGroupsResponse.builder().logGroups(
-                List.of(LogGroup.builder().creationTime(10L).logGroupName("testLogGroup").build())).build());
+                List.of(LogGroup.builder().creationTime(10L).logGroupName("testLogGroup-ApiAccessLogGroup").build())).build());
         return cloudWatchLogsClient;
     }
 
@@ -177,7 +177,7 @@ public class UpdateDashboardHandlerTest {
         var expectedCloudWatchLogsWidget = new CloudWatchWidget<>(
             "log", LogProperties.builder()
                        .withRegion("eu-west-1")
-                       .withTitle("5XX Error log")
+                       .withTitle("5XX ApiGateway Error log")
                        .withView("table")
                        .withQuery(EXPECTED_LOG_QUERY)
                        .build(), 6, 12, 12, 24).toJsonString();

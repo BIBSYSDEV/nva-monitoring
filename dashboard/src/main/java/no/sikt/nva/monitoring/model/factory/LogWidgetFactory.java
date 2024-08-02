@@ -22,6 +22,7 @@ public class LogWidgetFactory {
     public static final String LIMIT_100 = "limit 100";
     public static final String SORT_TIMESTAMP_DESC = "sort @timestamp desc";
     public static final String DEFAULT_FIELDS = "fields @timestamp, @message, @logStream, @log";
+    public static final String API_ACCESS_LOG_GROUP = "ApiAccessLogGroup";
     private final CloudWatchLogsClient cloudWatchLogsClient;
     private final LambdaClient lambdaClient;
 
@@ -58,18 +59,18 @@ public class LogWidgetFactory {
 
     private  List<String> fetchNewestLambdaLogGroups() {
         return fetchLamdaFunctionNames().stream()
-                   .map(this::fetchLogGroupsForFunction)
+                   .map(this::fetchApiGatewayLogGroupsForFunction)
                    .flatMap(Collection::stream)
                    .max(Comparator.comparing(LogGroup::creationTime))
                    .map(LogGroup::logGroupName)
                    .stream().toList();
     }
 
-    private List<LogGroup> fetchLogGroupsForFunction(String functionName) {
-        var request = DescribeLogGroupsRequest.builder()
-                   .logGroupNamePrefix(AWS_LAMBDA_LOG_GROUP_PREFIX + functionName)
-                   .build();
-        return cloudWatchLogsClient.describeLogGroups(request).logGroups();
+    private List<LogGroup> fetchApiGatewayLogGroupsForFunction(String functionName) {
+        var request = DescribeLogGroupsRequest.builder().build();
+        return cloudWatchLogsClient.describeLogGroups(request).logGroups().stream()
+                   .filter(logGroup -> logGroup.logGroupName().contains(API_ACCESS_LOG_GROUP))
+                   .toList();
     }
 
     private List<String> fetchLamdaFunctionNames() {

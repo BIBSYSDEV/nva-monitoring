@@ -31,7 +31,7 @@ public record LogProperties(String region, String title, String query, String vi
     private static String constructQueryForLogGroups(ArrayList<String> logGroups) {
         return LogQuery.builder()
                         .withLogGroups(logGroups)
-                        .withFilter("filter @message like /5\\d{2}/")
+                        .withFilter("filter @message like /\\b5\\d{2}\\b/")
                         .withFields("fields @timestamp, @message, @logStream, @log")
                         .withSort("sort @timestamp desc")
                         .withLimit("limit 10000")

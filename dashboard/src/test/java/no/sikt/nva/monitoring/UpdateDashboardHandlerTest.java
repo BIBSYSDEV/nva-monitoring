@@ -83,7 +83,7 @@ public class UpdateDashboardHandlerTest {
     private static final String EXPECTED_API_GATEWAY_COUNT_WIDGET = new CloudWatchWidget<>(
         TYPE, METRIC_PROPERTIES_COUNT, IGNORED, IGNORED, IGNORED, IGNORED).toJsonString();
     public static final String EXPECTED_LOG_QUERY =
-        "SOURCE 'testLogGroup' | filter @message like /5\\d{2}/ | fields @timestamp, @message, @logStream, @log "
+        "SOURCE 'testLogGroup' | filter @message like /\\b5\\d{2}\\b/ | fields @timestamp, @message, @logStream, @log "
         + "| sort @timestamp desc | limit 10000";
     private UpdateDashboardHandler handler;
     private FakeCloudWatchClient cloudWatchClient;

@@ -1,18 +1,16 @@
-package no.sikt.nva.monitoring;
+package no.sikt.nva.monitoring.model;
 
 import com.amazonaws.services.lambda.runtime.Context;
 import com.amazonaws.services.lambda.runtime.RequestHandler;
 import com.amazonaws.services.lambda.runtime.events.CloudFormationCustomResourceEvent;
 import java.util.List;
-import no.sikt.nva.monitoring.model.CloudWatchWidget;
-import no.sikt.nva.monitoring.model.DashboardBody;
 import no.sikt.nva.monitoring.model.factory.AlarmWidgetFactory;
 import no.sikt.nva.monitoring.model.factory.ApiGatewayWidgetFactory;
 import nva.commons.core.Environment;
+import nva.commons.core.JacocoGenerated;
 import software.amazon.awssdk.regions.Region;
 import software.amazon.awssdk.services.apigateway.ApiGatewayClient;
 import software.amazon.awssdk.services.cloudwatch.CloudWatchClient;
-import nva.commons.core.JacocoGenerated;
 import software.amazon.awssdk.services.cloudwatch.model.PutDashboardRequest;
 
 public class UpdateDashboardHandler implements RequestHandler<CloudFormationCustomResourceEvent, Void> {
@@ -58,6 +56,22 @@ public class UpdateDashboardHandler implements RequestHandler<CloudFormationCust
         var apiGateway5xxWidget = apigatewayFactory.creatCloudWatchWidget(0, "5XXError");
         var apiGateway4xxWidget = apigatewayFactory.creatCloudWatchWidget(1, "4XXError");
         var apiGatewayCountWidget = apigatewayFactory.creatCloudWatchWidget(2, "Count");
-        return List.of(alarmWidget, apiGateway5xxWidget, apiGateway4xxWidget, apiGatewayCountWidget);
+        var logWidget = createCloudWatchLogWidget();
+        return List.of(alarmWidget, apiGateway5xxWidget, apiGateway4xxWidget, apiGatewayCountWidget, logWidget);
+    }
+
+    private static CloudWatchWidget<LogProperties> createCloudWatchLogWidget() {
+        return LogProperties.builder()
+                   .withRegion(Region.EU_WEST_1.toString())
+                   .withTitle("5XX Error log")
+                   .withView("table")
+                   .withQuery("""
+                                  fields @timestamp, @message, @logStream, @log
+                                  | filter @message like /5\\d{2}/
+                                  | sort @timestamp desc
+                                  | limit 10000
+                                  """)
+                   .build()
+                   .toCloudWatchWidget();
     }
 }

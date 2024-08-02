@@ -28,6 +28,7 @@ import no.sikt.nva.monitoring.model.AlarmProperties;
 import no.sikt.nva.monitoring.model.CloudWatchWidget;
 import no.sikt.nva.monitoring.model.DashboardBody;
 import no.sikt.nva.monitoring.model.MetricProperties;
+import no.sikt.nva.monitoring.model.UpdateDashboardHandler;
 import no.sikt.nva.monitoring.utils.FakeApiGatewayClient;
 import no.sikt.nva.monitoring.utils.FakeCloudWatchClient;
 import no.sikt.nva.monitoring.utils.FakeCloudWatchClientThrowingException;
@@ -50,29 +51,13 @@ public class UpdateDashboardHandlerTest {
                                               API_2,
                                               METRIC_WIDGET_OBJECT))));
     public static final MetricProperties METRIC_PROPERTIES_4XX =
-        new MetricProperties(VIEW, NOT_STACKED, REGION,
-                             (List.of(List.of(AWS_API_GATEWAY,
-                                              "4XXError",
-                                              API_NAME,
-                                              API_1,
-                                              METRIC_WIDGET_OBJECT),
-                                      List.of(AWS_API_GATEWAY,
-                                              "4XXError",
-                                              API_NAME,
-                                              API_2,
-                                              METRIC_WIDGET_OBJECT))));
-    public static final MetricProperties METRIC_PROPERTIES_COUNT = new MetricProperties(VIEW, NOT_STACKED, REGION,
-                                                                                        (List.of(
-                                                                                            List.of(AWS_API_GATEWAY,
-                                                                                                    "Count",
-                                                                                                    API_NAME,
-                                                                                                    API_1,
-                                                                                                    METRIC_WIDGET_OBJECT),
-                                                                                            List.of(AWS_API_GATEWAY,
-                                                                                                    "Count",
-                                                                                                    API_NAME,
-                                                                                                    API_2,
-                                                                                                    METRIC_WIDGET_OBJECT))));
+        new MetricProperties(VIEW, NOT_STACKED, REGION, (
+            List.of(List.of(AWS_API_GATEWAY, "4XXError", API_NAME, API_1, METRIC_WIDGET_OBJECT),
+                    List.of(AWS_API_GATEWAY, "4XXError", API_NAME, API_2, METRIC_WIDGET_OBJECT))));
+    public static final MetricProperties METRIC_PROPERTIES_COUNT = new MetricProperties(
+        VIEW, NOT_STACKED, REGION, (
+            List.of(List.of(AWS_API_GATEWAY, "Count", API_NAME, API_1, METRIC_WIDGET_OBJECT),
+                    List.of(AWS_API_GATEWAY, "Count", API_NAME, API_2, METRIC_WIDGET_OBJECT))));
     private static final int IGNORED = 0;
     private static final Context mockContext = mock(Context.class);
     private static final CloudFormationCustomResourceEvent EVENT = CloudFormationCustomResourceEvent.builder().build();

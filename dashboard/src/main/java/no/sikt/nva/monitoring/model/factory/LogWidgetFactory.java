@@ -20,23 +20,27 @@ public class LogWidgetFactory {
     public static final String DEFAULT_FIELDS = "fields @timestamp, @message, @logStream, @log";
     public static final String MASTER_PIPELINES = "master-pipelines";
     public static final String API_ACCESS_LOG_GROUP_NAME_PATTERN = "*ApiAccessLogGroup*";
+    public static final int HEIGHT = 6;
+    public static final int WIDTH = 24;
+    public static final int Y = 24;
+    public static final int X = 12;
     private final CloudWatchLogsClient cloudWatchLogsClient;
 
     public LogWidgetFactory(CloudWatchLogsClient cloudWatchLogsClient) {
         this.cloudWatchLogsClient = cloudWatchLogsClient;
     }
 
-    public CloudWatchWidget<LogProperties> createLogWidget(String title, String filter) {
+    public CloudWatchWidget<LogProperties> createLogWidgetForApiGatewayLogs(String title, String filter) {
         var logGroups = fetchApiGatewayLogGroups();
         var query = constructQueryForLogGroupsWithFilter(logGroups, filter);
-        return new CloudWatchWidget<>(LOG, constructLogProperties(title, query), 6, 24, 12, 24);
+        return new CloudWatchWidget<>(LOG, constructLogProperties(title, query), HEIGHT, WIDTH, X, Y);
     }
 
     public List<String> fetchApiGatewayLogGroups() {
         String nextToken = null;
         var allLogGroups = new ArrayList<LogGroup>();
         do {
-            var request = listLogGroupRequestWithNamePattern(nextToken);
+            var request = createListLogGroupRequestWithNamePattern(nextToken);
             var response = cloudWatchLogsClient.describeLogGroups(request);
             allLogGroups.addAll(response.logGroups());
             nextToken = response.nextToken();
@@ -71,7 +75,7 @@ public class LogWidgetFactory {
                    .toList();
     }
 
-    private static DescribeLogGroupsRequest listLogGroupRequestWithNamePattern(String nextToken) {
+    private static DescribeLogGroupsRequest createListLogGroupRequestWithNamePattern(String nextToken) {
         return DescribeLogGroupsRequest.builder()
                    .logGroupNamePattern(API_ACCESS_LOG_GROUP_NAME_PATTERN)
                    .nextToken(nextToken)

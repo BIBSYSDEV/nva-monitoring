@@ -11,12 +11,10 @@ import no.sikt.nva.monitoring.model.factory.ApiGatewayWidgetFactory;
 import no.sikt.nva.monitoring.model.factory.LogWidgetFactory;
 import nva.commons.core.Environment;
 import nva.commons.core.JacocoGenerated;
-import software.amazon.awssdk.regions.Region;
 import software.amazon.awssdk.services.apigateway.ApiGatewayClient;
 import software.amazon.awssdk.services.cloudwatch.CloudWatchClient;
 import software.amazon.awssdk.services.cloudwatch.model.PutDashboardRequest;
 import software.amazon.awssdk.services.cloudwatchlogs.CloudWatchLogsClient;
-import software.amazon.awssdk.services.lambda.LambdaClient;
 
 public class UpdateDashboardHandler implements RequestHandler<CloudFormationCustomResourceEvent, Void> {
 
@@ -24,6 +22,8 @@ public class UpdateDashboardHandler implements RequestHandler<CloudFormationCust
         "filter @message like /\"status\"\\s*:\\s*\"5\\d{2}\"/";
     public static final String FILTER_FOR_4XX_ERRORS =
         "filter @message like /\"status\"\\s*:\\s*\"4\\d{2}\"/";
+    public static final String API_GATEWAY_5XX_ERROR_LOG = "5XX ApiGateway Error log";
+    public static final String API_GATEWAY_4XX_ERROR_LOG = "4XX ApiGateway Error log";
     private final CloudWatchClient cloudWatchClient;
     private final CloudWatchLogsClient cloudWatchLogsClient;
     private final String dashboardName;
@@ -31,11 +31,7 @@ public class UpdateDashboardHandler implements RequestHandler<CloudFormationCust
 
     @JacocoGenerated
     public UpdateDashboardHandler() {
-        this(CloudWatchClient.builder()
-                 .region(Region.EU_WEST_1)
-                 .build(),
-             ApiGatewayClient.create(),
-             CloudWatchLogsClient.create());
+        this(CloudWatchClient.create(), ApiGatewayClient.create(), CloudWatchLogsClient.create());
     }
 
     public UpdateDashboardHandler(CloudWatchClient cloudWatchClient, ApiGatewayClient apiGatewayClient,
@@ -69,8 +65,10 @@ public class UpdateDashboardHandler implements RequestHandler<CloudFormationCust
         var apiGateway4xxWidget = apigatewayFactory.creatCloudWatchWidget(1, "4XXError");
         var apiGatewayCountWidget = apigatewayFactory.creatCloudWatchWidget(2, "Count");
         var logWidgetFactory = new LogWidgetFactory(cloudWatchLogsClient);
-        var log5xxWidget = logWidgetFactory.createLogWidget("5XX ApiGateway Error log", FILTER_FOR_5XX_ERRORS);
-        var log4xxWidget = logWidgetFactory.createLogWidget("4XX ApiGateway Error log", FILTER_FOR_4XX_ERRORS);
+        var log5xxWidget = logWidgetFactory.createLogWidgetForApiGatewayLogs(
+            API_GATEWAY_5XX_ERROR_LOG, FILTER_FOR_5XX_ERRORS);
+        var log4xxWidget = logWidgetFactory.createLogWidgetForApiGatewayLogs(
+            API_GATEWAY_4XX_ERROR_LOG, FILTER_FOR_4XX_ERRORS);
         return List.of(alarmWidget,
                        apiGateway5xxWidget,
                        apiGateway4xxWidget,

@@ -45,7 +45,9 @@ Resources:
               - logs:CreateLogGroup
               - logs:CreateLogStream
               - logs:PutLogEvents
+              - logs:DescribeLogGroups
               - lambda:InvokeFunction
+              - lambda:ListFunctions
             Resource: "*"
 
   CloudWatchPermissions:

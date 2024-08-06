@@ -61,9 +61,9 @@ public class UpdateDashboardHandler implements RequestHandler<CloudFormationCust
     private List<CloudWatchWidget> createWidgets() {
         var alarmWidget = new AlarmWidgetFactory(cloudWatchClient).creatCloudWatchWidget();
         var apigatewayFactory = new ApiGatewayWidgetFactory(apiGatewayClient);
-        var apiGateway5xxWidget = apigatewayFactory.creatCloudWatchWidget(0, "5XXError");
-        var apiGateway4xxWidget = apigatewayFactory.creatCloudWatchWidget(1, "4XXError");
-        var apiGatewayCountWidget = apigatewayFactory.creatCloudWatchWidget(2, "Count");
+        var apiGateway5xxWidget = apigatewayFactory.creatCloudWatchWidget(0, "5XX API Errors");
+        var apiGateway4xxWidget = apigatewayFactory.creatCloudWatchWidget(1, "4XX API Errors");
+        var apiGatewayCountWidget = apigatewayFactory.creatCloudWatchWidget(2, "API request count");
         var logWidgetFactory = new LogWidgetFactory(cloudWatchLogsClient);
         var log5xxWidget = logWidgetFactory.createLogWidgetForApiGatewayLogs(
             API_GATEWAY_5XX_ERROR_LOG, FILTER_FOR_5XX_ERRORS);

@@ -25,6 +25,7 @@ import static org.mockito.Mockito.when;
 import com.amazonaws.services.lambda.runtime.Context;
 import com.amazonaws.services.lambda.runtime.events.CloudFormationCustomResourceEvent;
 import com.fasterxml.jackson.core.JsonProcessingException;
+import java.nio.file.Path;
 import java.util.List;
 import no.sikt.nva.monitoring.model.AlarmProperties;
 import no.sikt.nva.monitoring.model.CloudWatchWidget;
@@ -35,6 +36,7 @@ import no.sikt.nva.monitoring.utils.FakeApiGatewayClient;
 import no.sikt.nva.monitoring.utils.FakeCloudWatchClient;
 import no.sikt.nva.monitoring.utils.FakeCloudWatchClientThrowingException;
 import no.unit.nva.commons.json.JsonUtils;
+import nva.commons.core.ioutils.IoUtils;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import software.amazon.awssdk.services.cloudwatchlogs.CloudWatchLogsClient;
@@ -84,6 +86,8 @@ public class UpdateDashboardHandlerTest {
         + "| fields @timestamp, @message, @logStream, @log "
         + "| sort @timestamp desc "
         + "| limit 100";
+    public static final String LAMBDA_WIDGET_JSON = "lambda_widget.json";
+    public static final String EXPECTED_LAMBDA_WIDGET = IoUtils.stringFromResources(Path.of(LAMBDA_WIDGET_JSON));
     private UpdateDashboardHandler handler;
     private FakeCloudWatchClient cloudWatchClient;
     private FakeApiGatewayClient apiGatewayClient;
@@ -171,6 +175,15 @@ public class UpdateDashboardHandlerTest {
         var expectedWidget = JsonUtils.dtoObjectMapper.readValue(expectedCloudWatchLogsWidget, CloudWatchWidget.class);
 
         assertThat(dashboardBody.widgets(), hasItem(expectedWidget));
+    }
+
+    @Test
+    void shouldUpdateDashboardWithLambdaWidget() throws JsonProcessingException {
+        handler.handleRequest(EVENT, mockContext);
+        var dashboardBody = getDashboardBody();
+        var expectedLambdaWidget = JsonUtils.dtoObjectMapper.readValue(EXPECTED_LAMBDA_WIDGET, CloudWatchWidget.class);
+
+        assertThat(dashboardBody.widgets(), hasItem(expectedLambdaWidget));
     }
 
     private static List<String> getAlarmArns(DashboardBody dashboardBody) {

@@ -69,7 +69,9 @@ public class UpdateDashboardHandler implements RequestHandler<CloudFormationCust
             API_GATEWAY_5XX_ERROR_LOG, FILTER_FOR_5XX_ERRORS);
         var log4xxWidget = logWidgetFactory.createLogWidgetForApiGatewayLogs(
             API_GATEWAY_4XX_ERROR_LOG, FILTER_FOR_4XX_ERRORS);
+        var lambdaWidget = LambdaWidget.create();
         return List.of(alarmWidget,
+                       lambdaWidget,
                        apiGateway5xxWidget,
                        apiGateway4xxWidget,
                        apiGatewayCountWidget,

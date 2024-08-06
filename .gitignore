@@ -15,6 +15,7 @@ build/
 .idea/misc.xml
 .idea/vcs.xml
 .idea/sonarlint
+.idea/aws.xml
 *.iws
 *.iml
 *.ipr

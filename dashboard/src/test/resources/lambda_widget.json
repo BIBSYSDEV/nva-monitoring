@@ -1,0 +1,66 @@
+{
+  "height": 4,
+  "width": 24,
+  "y": 0,
+  "x": 5,
+  "type": "metric",
+  "properties": {
+    "metrics": [
+      [
+        "AWS/Lambda",
+        "Errors",
+        {
+          "region": "eu-west-1"
+        }
+      ],
+      [
+        "AWS/Lambda",
+        "Throttles",
+        {
+          "region": "eu-west-1"
+        }
+      ],
+      [
+        "AWS/Lambda",
+        "Invocations",
+        {
+          "region": "eu-west-1"
+        }
+      ],
+      [
+        "AWS/Lambda",
+        "ConcurrentExecutions",
+        {
+          "stat": "Maximum",
+          "region": "eu-west-1"
+        }
+      ],
+      [
+        "AWS/Lambda",
+        "ClaimedAccountConcurrency",
+        {
+          "stat": "Maximum",
+          "region": "eu-west-1"
+        }
+      ],
+      [
+        "AWS/Lambda",
+        "AsyncEventAge",
+        {
+          "stat": "Maximum",
+          "region": "eu-west-1"
+        }
+      ]
+    ],
+    "view": "singleValue",
+    "stacked": true,
+    "region": "eu-west-1",
+    "stat": "Sum",
+    "period": 300,
+    "liveData": true,
+    "sparkline": true,
+    "trend": true,
+    "singleValueFullPrecision": true,
+    "title": "Lambda metrics - last 5 minutes"
+  }
+}

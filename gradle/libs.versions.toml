@@ -1,16 +1,16 @@
 [versions]
-log4j = { strictly = '2.23.0' }
+log4j = { strictly = '2.24.0' }
 awsLambdaCore = { strictly = '1.2.3' }
-awsLambdaEvents = { strictly = '3.11.4' }
+awsLambdaEvents = { strictly = '3.13.0' }
 awsLog4j2Version = { strictly = '1.6.0' }
-junit = { strictly = '5.10.2' }
-mockito = { strictly = '5.10.0' }
+junit = { strictly = '5.11.0' }
+mockito = { strictly = '5.13.0' }
 vavrVersion = { strictly = '0.10.4' }
 resilience4jRetry = { strictly = '2.2.0' }
-awsSdk2 = {strictly = '2.25.24'}
-nva = { strictly = '1.38.2' }
-jackson = { strictly = '2.16.1' }
-hamcrest = { strictly = '2.2' }
+awsSdk2 = {strictly = '2.27.24'}
+nva = { strictly = '1.40.20' }
+jackson = { strictly = '2.17.2' }
+hamcrest = { strictly = '3.0' }
 
 
 [libraries]

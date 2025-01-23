@@ -9,7 +9,8 @@ on:
 jobs:
   build:
     uses: BIBSYSDEV/nva-github-workflows/.github/workflows/java.yml@v1
-    inputs:
+    with:
       lint_openapi: false
+      cloudformation_template: template.yml
     secrets:
       codacy_token: ${{ secrets.CODACY_PROJECT_TOKEN }}

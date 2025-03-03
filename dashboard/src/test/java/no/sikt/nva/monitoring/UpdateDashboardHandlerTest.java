@@ -19,6 +19,7 @@ import static no.sikt.nva.monitoring.utils.FakeCloudWatchClient.ALARM_ARN_1;
 import static no.sikt.nva.monitoring.utils.FakeCloudWatchClient.ALARM_ARN_2;
 import static no.sikt.nva.monitoring.utils.FakeCloudWatchClient.ALARM_ARN_3;
 import static org.hamcrest.MatcherAssert.assertThat;
+import static org.hamcrest.Matchers.empty;
 import static org.hamcrest.Matchers.hasItem;
 import static org.hamcrest.Matchers.not;
 import static org.junit.jupiter.api.Assertions.assertThrows;
@@ -46,6 +47,10 @@ import software.amazon.awssdk.services.cloudwatchlogs.CloudWatchLogsClient;
 import software.amazon.awssdk.services.cloudwatchlogs.model.DescribeLogGroupsRequest;
 import software.amazon.awssdk.services.cloudwatchlogs.model.DescribeLogGroupsResponse;
 import software.amazon.awssdk.services.cloudwatchlogs.model.LogGroup;
+import software.amazon.awssdk.services.iam.IamClient;
+import software.amazon.awssdk.services.iam.model.ListRolesRequest;
+import software.amazon.awssdk.services.iam.model.ListRolesResponse;
+import software.amazon.awssdk.services.iam.model.Role;
 
 public class UpdateDashboardHandlerTest {
 
@@ -95,13 +100,24 @@ public class UpdateDashboardHandlerTest {
     private FakeCloudWatchClient cloudWatchClient;
     private FakeApiGatewayClient apiGatewayClient;
     private CloudWatchLogsClient cloudWatchLogsClient;
+    private IamClient mockIam;
 
     @BeforeEach
     void init() {
         cloudWatchClient = new FakeCloudWatchClient();
         apiGatewayClient = new FakeApiGatewayClient();
         cloudWatchLogsClient = mockedCloudWatchLogsClient();
-        handler = new UpdateDashboardHandler(cloudWatchClient, apiGatewayClient, cloudWatchLogsClient);
+        mockIam = getIamMock();
+        handler = new UpdateDashboardHandler(cloudWatchClient, apiGatewayClient, cloudWatchLogsClient, mockIam);
+    }
+
+    private static IamClient getIamMock() {
+        var client =  mock(IamClient.class);
+        ListRolesResponse response = ListRolesResponse.builder()
+                                      .roles(Role.builder().roleName("CWDBSharing-ReadOnlyAccess-1234S67B").build())
+                                      .build();
+        when(client.listRoles(any(ListRolesRequest.class))).thenReturn(response);
+        return client;
     }
 
     private CloudWatchLogsClient mockedCloudWatchLogsClient() {
@@ -116,9 +132,22 @@ public class UpdateDashboardHandlerTest {
     @Test
     void shouldThrowExceptionWhenCloudWatchClientThrowsException() {
         handler = new UpdateDashboardHandler(new FakeCloudWatchClientThrowingException(), apiGatewayClient,
-                                             cloudWatchLogsClient);
+                                             cloudWatchLogsClient, mockIam);
         assertThrows(Exception.class, () -> handler.handleRequest(EVENT,
                                                                   mockContext));
+    }
+
+    @Test
+    void shouldNotFailOnEmptyIamResult() throws JsonProcessingException {
+        var iam =  mock(IamClient.class);
+        when(iam.listRoles(any(ListRolesRequest.class))).thenReturn(ListRolesResponse.builder().build());
+        handler = new UpdateDashboardHandler(cloudWatchClient, apiGatewayClient,
+                                             cloudWatchLogsClient, iam);
+
+        handler.handleRequest(EVENT, mockContext);
+
+        var dashboardBody = getDashboardBody();
+        assertThat(dashboardBody.widgets(), not(empty()));
     }
 
     @Test

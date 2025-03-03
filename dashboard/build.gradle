@@ -6,6 +6,8 @@ dependencies {
     implementation libs.aws.cloudwatch.logs
     implementation libs.aws.lambda
     implementation libs.aws.apigateway
+    implementation libs.aws.iam
+    implementation libs.aws.auth
     implementation libs.nva.core
     implementation libs.bundles.jackson
     implementation libs.nva.json

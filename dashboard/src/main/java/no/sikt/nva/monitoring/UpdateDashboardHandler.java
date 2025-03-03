@@ -1,5 +1,6 @@
 package no.sikt.nva.monitoring;
 
+import static no.sikt.nva.monitoring.DashboardPolicyDocument.updateRolePolicy;
 import com.amazonaws.services.lambda.runtime.Context;
 import com.amazonaws.services.lambda.runtime.RequestHandler;
 import com.amazonaws.services.lambda.runtime.events.CloudFormationCustomResourceEvent;
@@ -11,10 +12,14 @@ import no.sikt.nva.monitoring.model.factory.ApiGatewayWidgetFactory;
 import no.sikt.nva.monitoring.model.factory.LogWidgetFactory;
 import nva.commons.core.Environment;
 import nva.commons.core.JacocoGenerated;
+
+import software.amazon.awssdk.auth.credentials.DefaultCredentialsProvider;
+import software.amazon.awssdk.regions.Region;
 import software.amazon.awssdk.services.apigateway.ApiGatewayClient;
 import software.amazon.awssdk.services.cloudwatch.CloudWatchClient;
 import software.amazon.awssdk.services.cloudwatch.model.PutDashboardRequest;
 import software.amazon.awssdk.services.cloudwatchlogs.CloudWatchLogsClient;
+import software.amazon.awssdk.services.iam.IamClient;
 
 public class UpdateDashboardHandler implements RequestHandler<CloudFormationCustomResourceEvent, Void> {
 
@@ -27,22 +32,34 @@ public class UpdateDashboardHandler implements RequestHandler<CloudFormationCust
     public static final String API_REQUEST_COUNT_WIDGET_NAME = "Count";
     public static final String API_ERRORS_4XX_WIDGET_NAME = "4XXError";
     public static final String API_ERRORS_5XX_WIDGET_NAME = "5XXError";
+
     private final CloudWatchClient cloudWatchClient;
     private final CloudWatchLogsClient cloudWatchLogsClient;
     private final String dashboardName;
     private final ApiGatewayClient apiGatewayClient;
+    private final IamClient iamClient;
 
     @JacocoGenerated
     public UpdateDashboardHandler() {
-        this(CloudWatchClient.create(), ApiGatewayClient.create(), CloudWatchLogsClient.create());
+        this(CloudWatchClient.create(), ApiGatewayClient.create(), CloudWatchLogsClient.create(),
+             createIamClient());
+    }
+
+    @JacocoGenerated
+    private static IamClient createIamClient() {
+        return IamClient.builder()
+                   .credentialsProvider(DefaultCredentialsProvider.create())
+                   .region(Region.of(new Environment().readEnv("AWS_REGION")))
+                   .build();
     }
 
     public UpdateDashboardHandler(CloudWatchClient cloudWatchClient, ApiGatewayClient apiGatewayClient,
-                                  CloudWatchLogsClient cloudWatchLogsClient) {
+                                  CloudWatchLogsClient cloudWatchLogsClient, IamClient iamClient) {
         this.cloudWatchClient = cloudWatchClient;
         this.dashboardName = new Environment().readEnv("DASHBOARD_NAME");
         this.apiGatewayClient = apiGatewayClient;
         this.cloudWatchLogsClient = cloudWatchLogsClient;
+        this.iamClient = iamClient;
     }
 
     @Override
@@ -54,8 +71,12 @@ public class UpdateDashboardHandler implements RequestHandler<CloudFormationCust
                                           .dashboardName(dashboardName)
                                           .dashboardBody(createDashBoardBody())
                                           .build());
+
+        updateRolePolicy(iamClient);
         return null;
     }
+
+
 
     private String createDashBoardBody() {
         return new DashboardBody(createWidgets()).toJsonString();

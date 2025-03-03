@@ -79,6 +79,21 @@ Resources:
               - Apigateway:GET
             Resource: "*"
 
+  IAMPermissions:
+    Type: AWS::IAM::Policy
+    Properties:
+      PolicyName: !Sub IAMPermissions-${AWS::StackName}
+      Roles:
+        - !Ref LambdaRole
+      PolicyDocument:
+        Version: '2012-10-17'
+        Statement:
+          - Effect: Allow
+            Action:
+              - iam:PutRolePolicy
+              - iam:ListRoles
+            Resource:
+              - !Sub "arn:aws:iam::${AWS::AccountId}:role/service-role/CWDBSharing-ReadOnlyAccess-*"
 
   UpdateDashboardHandler:
     Type: AWS::Serverless::Function
@@ -86,6 +101,7 @@ Resources:
       - DefaultLambdaPermissions
       - CloudWatchPermissions
       - ApiGatewayPermissions
+      - IAMPermissions
     Properties:
       CodeUri: dashboard
       Handler: no.sikt.nva.monitoring.UpdateDashboardHandler::handleRequest

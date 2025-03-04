@@ -2,6 +2,7 @@ package no.sikt.nva.monitoring.model.factory;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.function.Predicate;
 import no.sikt.nva.monitoring.model.AlarmProperties;
 import no.sikt.nva.monitoring.model.CloudWatchWidget;
 import software.amazon.awssdk.services.cloudwatch.CloudWatchClient;
@@ -13,7 +14,7 @@ public class AlarmWidgetFactory {
 
     public static final String ALARMS = "alarms";
     public static final int WIDTH = 24;
-    public static final int HEIGHT = 8;
+    public static final int HEIGHT = 4;
     public static final int X_COORDINATE = 0;
     public static final int Y_COORDINATE = 0;
     public static final String STATE_UPDATED_TIMESTAMP = "stateUpdatedTimestamp";
@@ -41,12 +42,16 @@ public class AlarmWidgetFactory {
         var alarmsArns = new ArrayList<String>();
         var metricAlarmsArn = alarmsResponse.metricAlarms().stream().map(MetricAlarm::alarmArn).toList();
         if (!metricAlarmsArn.isEmpty()) {
-            alarmsArns.addAll(metricAlarmsArn);
+            alarmsArns.addAll(metricAlarmsArn.stream().filter(alarmFilter()).toList());
         }
         var compositeAlarms = alarmsResponse.compositeAlarms().stream().map(CompositeAlarm::alarmArn).toList();
         if (!compositeAlarms.isEmpty()) {
             alarmsArns.addAll(compositeAlarms);
         }
         return alarmsArns;
+    }
+
+    private static Predicate<String> alarmFilter() {
+        return arn -> !arn.contains(":alarm:TargetTracking-function:");
     }
 }

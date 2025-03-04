@@ -1,16 +1,16 @@
 [versions]
-log4j = { strictly = '2.23.0' }
+log4j = { strictly = '2.24.0' }
 awsLambdaCore = { strictly = '1.2.3' }
-awsLambdaEvents = { strictly = '3.11.4' }
+awsLambdaEvents = { strictly = '3.13.0' }
 awsLog4j2Version = { strictly = '1.6.0' }
-junit = { strictly = '5.10.2' }
-mockito = { strictly = '5.10.0' }
+junit = { strictly = '5.11.0' }
+mockito = { strictly = '5.13.0' }
 vavrVersion = { strictly = '0.10.4' }
 resilience4jRetry = { strictly = '2.2.0' }
-awsSdk2 = {strictly = '2.25.24'}
-nva = { strictly = '1.38.2' }
-jackson = { strictly = '2.16.1' }
-hamcrest = { strictly = '2.2' }
+awsSdk2 = {strictly = '2.27.24'}
+nva = { strictly = '1.40.20' }
+jackson = { strictly = '2.17.2' }
+hamcrest = { strictly = '3.0' }
 
 
 [libraries]
@@ -19,7 +19,9 @@ aws-lambda-java-core = { group = 'com.amazonaws', name = 'aws-lambda-java-core',
 aws-lambda-events = { group = 'com.amazonaws', name = 'aws-lambda-java-events', version.ref = 'awsLambdaEvents' }
 
 aws-cloudwatch = { group = 'software.amazon.awssdk', name = 'cloudwatch', version.ref = 'awsSdk2' }
+aws-cloudwatch-logs = { group = 'software.amazon.awssdk', name = 'cloudwatchlogs', version.ref = 'awsSdk2' }
 aws-apigateway = { group = 'software.amazon.awssdk', name = 'apigateway', version.ref = 'awsSdk2' }
+aws-lambda = { group = 'software.amazon.awssdk', name = 'lambda', version.ref = 'awsSdk2' }
 
 aws-lambda-log4j2 = { group = 'com.amazonaws', name = 'aws-lambda-java-log4j2', version.ref = 'awsLog4j2Version' }
 log4j-slf4j-impl = { group = 'org.apache.logging.log4j', name = 'log4j-slf4j2-impl', version.ref = 'log4j' }

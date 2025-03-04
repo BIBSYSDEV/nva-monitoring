@@ -4,6 +4,7 @@ import java.util.Collection;
 import java.util.List;
 import no.sikt.nva.monitoring.model.CloudWatchWidget;
 import no.sikt.nva.monitoring.model.MetricProperties;
+import no.sikt.nva.monitoring.model.MetricWidgetObject;
 import software.amazon.awssdk.services.apigateway.ApiGatewayClient;
 import software.amazon.awssdk.services.apigateway.model.GetRestApisResponse;
 import software.amazon.awssdk.services.apigateway.model.RestApi;
@@ -38,7 +39,7 @@ public class ApiGatewayWidgetFactory {
         return page.items().stream().map(RestApi::name).toList();
     }
 
-    private List<List<String>> createMetricList(String metricName) {
+    private List<List<Object>> createMetricList(String metricName) {
         var pages = apiGatewayClient.getRestApisPaginator();
         return pages.stream()
                        .map(ApiGatewayWidgetFactory::getApiIds)
@@ -47,8 +48,8 @@ public class ApiGatewayWidgetFactory {
                        .toList();
     }
 
-    private List<String> createMetric(String metricName, String apiId) {
-        return List.of(AWS_API_GATEWAY, metricName, API_NAME, apiId);
+    private List<Object> createMetric(String metricName, String apiId) {
+        return List.of(AWS_API_GATEWAY, metricName, API_NAME, apiId, new MetricWidgetObject(REGION, "Sum"));
     }
 
 

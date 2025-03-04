@@ -12,7 +12,6 @@ Resources:
 
   UpdateDashboardHandlerLogGroup:
     Type: "AWS::Logs::LogGroup"
-    DependsOn: UpdateDashboardHandler
     Properties:
       RetentionInDays: 30
       LogGroupName: !Join ["", ["/aws/lambda/", !Ref UpdateDashboardHandler]]
@@ -45,7 +44,9 @@ Resources:
               - logs:CreateLogGroup
               - logs:CreateLogStream
               - logs:PutLogEvents
+              - logs:DescribeLogGroups
               - lambda:InvokeFunction
+              - lambda:ListFunctions
             Resource: "*"
 
   CloudWatchPermissions:
@@ -83,7 +84,6 @@ Resources:
     Type: AWS::Serverless::Function
     DependsOn:
       - DefaultLambdaPermissions
-      - LambdaRole
       - CloudWatchPermissions
       - ApiGatewayPermissions
     Properties:

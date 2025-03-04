@@ -7,6 +7,9 @@ Parameters:
     Type: 'String'
     Default: 'NvaMonitoringDashboard'
     Description: Name monitoring dashboard that will be updated by this lambda
+  SlackSnsArn:
+    Type: AWS::SSM::Parameter::Value<String>
+    Default: '/NVA/Monitoring/SlackSnsArn'
 
 Resources:
 
@@ -119,3 +122,37 @@ Resources:
       DashboardName: !Sub "${NvaMonitoringDashBoardName}-${AWS::AccountId}"
       DashboardBody: "{\"widgets\":[]}"
 
+
+  CostAnomalySubscription:
+    Type: "AWS::CE::AnomalySubscription"
+    Properties:
+      Frequency: "DAILY"
+      MonitorArnList:
+        - !Ref CostAnomalyMonitor
+      Subscribers:
+        - Address: !Ref SlackSnsArn
+          Type: "SNS"
+      Threshold: 100.0
+      SubscriptionName: "Cost Anomaly Subscription"
+
+  CostAnomalyMonitor:
+    Type: "AWS::CE::AnomalyMonitor"
+    Properties:
+      MonitorName: "Cost Anomaly Monitor"
+      MonitorType: "DIMENSIONAL"
+      MonitorDimension: "SERVICE"
+
+  CloudWatchAlarm:
+    Type: "AWS::CloudWatch::Alarm"
+    Properties:
+      AlarmName: "CostAnomalyAlarm"
+      AlarmDescription: "Alarm for Cost Anomaly Detection"
+      MetricName: "AnomalyDetection"
+      Namespace: "AWS/CostExplorer"
+      Statistic: "Maximum"
+      Period: 86400  # Check daily
+      EvaluationPeriods: 1
+      Threshold: 1
+      ComparisonOperator: "GreaterThanOrEqualToThreshold"
+      AlarmActions:
+        - !Ref SlackSnsArn

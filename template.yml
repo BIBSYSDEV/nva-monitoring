@@ -132,7 +132,13 @@ Resources:
       Subscribers:
         - Address: !Ref SlackSnsArn
           Type: "SNS"
-      Threshold: 100.0
+      ThresholdExpression: '{
+        "Dimensions": {
+          "Key": "ANOMALY_TOTAL_IMPACT_PERCENTAGE",
+          "MatchOptions": [ "GREATER_THAN_OR_EQUAL" ],
+          "Values": [ "70" ]
+        }
+      }'
       SubscriptionName: "Cost Anomaly Subscription"
 
   CostAnomalyMonitor:

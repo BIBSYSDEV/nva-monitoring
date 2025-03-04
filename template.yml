@@ -126,7 +126,7 @@ Resources:
   CostAnomalySubscription:
     Type: "AWS::CE::AnomalySubscription"
     Properties:
-      Frequency: "DAILY"
+      Frequency: "IMMEDIATE"
       MonitorArnList:
         - !Ref CostAnomalyMonitor
       Subscribers:
@@ -150,9 +150,7 @@ Resources:
       MetricName: "AnomalyDetection"
       Namespace: "AWS/CostExplorer"
       Statistic: "Maximum"
-      Period: 86400  # Check daily
+      Period: 600  # Check every 10 minutes
       EvaluationPeriods: 1
       Threshold: 1
       ComparisonOperator: "GreaterThanOrEqualToThreshold"
-      AlarmActions:
-        - !Ref SlackSnsArn

@@ -2,6 +2,7 @@ package no.sikt.nva.monitoring.model.factory;
 
 import static java.util.Objects.nonNull;
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.List;
 import no.sikt.nva.monitoring.model.CloudWatchWidget;
 import no.sikt.nva.monitoring.model.LogProperties;
@@ -68,7 +69,7 @@ public class LogWidgetFactory {
                    .constructQuery();
     }
 
-    private static List<String> keepMasterLogGroupsOnly(ArrayList<LogGroup> allLogGroups) {
+    private static List<String> keepMasterLogGroupsOnly(Collection<LogGroup> allLogGroups) {
         return allLogGroups.stream()
                    .map(LogGroup::logGroupName)
                    .filter(logGroup -> logGroup.contains(MASTER_PIPELINES))

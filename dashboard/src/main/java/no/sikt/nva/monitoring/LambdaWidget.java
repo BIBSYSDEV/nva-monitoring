@@ -37,7 +37,7 @@ public final class LambdaWidget {
                                    .withLiveData(true)
                                    .withSingleValueFullPrecision(true)
                                    .build();
-        return new CloudWatchWidget<LambdaProperties>(METRIC, lambdaProperties, 4, 24, 5, 0);
+        return new CloudWatchWidget<>(METRIC, lambdaProperties, 4, 24, 5, 0);
     }
 
     private static List<List<Object>> getAwsLambdaMetricEntry() {

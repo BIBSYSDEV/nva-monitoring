@@ -3,7 +3,7 @@ package no.sikt.nva.monitoring.model;
 import java.util.List;
 import java.util.stream.Collectors;
 
-public record LogQuery(List<String> logGroups, String filter, String fields, String sort, String limit) {
+public record LogQuery(List<String> logGroups, String filter, String fields, String stats, String sort, String limit) {
 
     public static final String DELIMITER = " | ";
 
@@ -15,7 +15,7 @@ public record LogQuery(List<String> logGroups, String filter, String fields, Str
         var logGroups = logGroups().stream()
                                            .map(LogQuery::toSource)
                                            .collect(Collectors.joining(DELIMITER));
-        return String.join(DELIMITER, logGroups, filter, fields, sort, limit);
+        return String.join(DELIMITER, logGroups, filter, fields, stats, sort, limit);
     }
 
     private static String toSource(String name) {
@@ -29,6 +29,7 @@ public record LogQuery(List<String> logGroups, String filter, String fields, Str
         private String fields;
         private String sort;
         private String limit;
+        private String stats;
 
         private Builder() {
         }
@@ -58,8 +59,13 @@ public record LogQuery(List<String> logGroups, String filter, String fields, Str
             return this;
         }
 
+        public Builder withStats(String stats) {
+            this.stats = stats;
+            return this;
+        }
+
         public LogQuery build() {
-            return new LogQuery(logGroups, filter, fields, sort, limit);
+            return new LogQuery(logGroups, filter, fields, stats, sort, limit);
         }
     }
 }

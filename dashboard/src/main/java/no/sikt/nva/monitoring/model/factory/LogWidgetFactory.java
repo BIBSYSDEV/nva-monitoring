@@ -17,8 +17,9 @@ public class LogWidgetFactory {
     public static final String LOG = "log";
     public static final String TABLE_VIEW = "table";
     public static final String LIMIT_100 = "limit 100";
-    public static final String SORT_TIMESTAMP_DESC = "sort @timestamp desc";
-    public static final String DEFAULT_FIELDS = "fields @timestamp, @message, @logStream, @log";
+    public static final String SORT_TIMESTAMP_DESC = "sort ErrorCount desc";
+    public static final String DEFAULT_FIELDS = "fields httpMethod, path, status, error.message";
+    public static final String DEFAULT_STATS = "stats count() as ErrorCount by httpMethod, path, status, error.message";
     public static final String MASTER_PIPELINES = "master-pipelines";
     public static final String API_ACCESS_LOG_GROUP_NAME_PATTERN = "*ApiAccessLogGroup*";
     public static final int HEIGHT = 6;
@@ -65,6 +66,7 @@ public class LogWidgetFactory {
                    .withFields(DEFAULT_FIELDS)
                    .withSort(SORT_TIMESTAMP_DESC)
                    .withLimit(LIMIT_100)
+                   .withStats(DEFAULT_STATS)
                    .build()
                    .constructQuery();
     }

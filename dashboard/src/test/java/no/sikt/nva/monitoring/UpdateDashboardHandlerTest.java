@@ -86,8 +86,9 @@ public class UpdateDashboardHandlerTest {
     public static final String EXPECTED_LOG_QUERY =
         "SOURCE 'master-pipelines-testLogGroup-ApiAccessLogGroup' "
         + "| filter @message like /\"status\"\\s*:\\s*\"5\\d{2}\"/ "
-        + "| fields @timestamp, @message, @logStream, @log "
-        + "| sort @timestamp desc "
+        + "| fields httpMethod, path, status, error.message "
+        + "| stats count() as ErrorCount by httpMethod, path, status, error.message "
+        + "| sort ErrorCount desc "
         + "| limit 100";
     public static final String LAMBDA_WIDGET_JSON = "lambda_widget.json";
     public static final String EXPECTED_LAMBDA_WIDGET = IoUtils.stringFromResources(Path.of(LAMBDA_WIDGET_JSON));

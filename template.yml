@@ -133,11 +133,22 @@ Resources:
         - Address: !Ref SlackSnsArn
           Type: "SNS"
       ThresholdExpression: '{
-        "Dimensions": {
-          "Key": "ANOMALY_TOTAL_IMPACT_PERCENTAGE",
-          "MatchOptions": [ "GREATER_THAN_OR_EQUAL" ],
-          "Values": [ "70" ]
-        }
+        "And": [
+          {
+            "Dimensions": {
+              "Key": "ANOMALY_TOTAL_IMPACT_PERCENTAGE",
+              "MatchOptions": [ "GREATER_THAN_OR_EQUAL" ],
+              "Values": [ "70" ]
+            }
+          },
+          {
+            "Dimensions": {
+              "Key": "ANOMALY_TOTAL_IMPACT_ABSOLUTE",
+              "MatchOptions": [ "GREATER_THAN_OR_EQUAL" ],
+              "Values": [ "50" ]
+            }
+          }
+        ]
       }'
       SubscriptionName: "Cost Anomaly Subscription"
 

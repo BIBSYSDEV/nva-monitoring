@@ -16,8 +16,3 @@ repositories {
 tasks.withType(JavaCompile).configureEach {
     options.release = 21
 }
-
-wrapper {
-    gradleVersion = '8.6'
-    distributionType = Wrapper.DistributionType.ALL
-}

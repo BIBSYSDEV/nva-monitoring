@@ -22,20 +22,20 @@ public class LogWidgetFactory {
     public static final String DEFAULT_STATS = "stats count() as ErrorCount by httpMethod, path, status";
     public static final String MASTER_PIPELINES = "master-pipelines";
     public static final String API_ACCESS_LOG_GROUP_NAME_PATTERN = "*ApiAccessLogGroup*";
-    public static final int HEIGHT = 6;
-    public static final int WIDTH = 24;
-    public static final int Y = 24;
-    public static final int X = 12;
+    public static final int HEIGHT = 8;
+    public static final int WIDTH = 12;
+    public static final int Y = 18;
     private final CloudWatchLogsClient cloudWatchLogsClient;
 
     public LogWidgetFactory(CloudWatchLogsClient cloudWatchLogsClient) {
         this.cloudWatchLogsClient = cloudWatchLogsClient;
     }
 
-    public CloudWatchWidget<LogProperties> createLogWidgetForApiGatewayLogs(String title, String filter) {
+    public CloudWatchWidget<LogProperties> createLogWidgetForApiGatewayLogs(String title, String filter,
+                                                                            int coordinateX) {
         var logGroups = fetchApiGatewayLogGroups();
         var query = constructQueryForLogGroupsWithFilter(logGroups, filter);
-        return new CloudWatchWidget<>(LOG, constructLogProperties(title, query), HEIGHT, WIDTH, X, Y);
+        return new CloudWatchWidget<>(LOG, constructLogProperties(title, query), HEIGHT, WIDTH, coordinateX, Y);
     }
 
     public List<String> fetchApiGatewayLogGroups() {

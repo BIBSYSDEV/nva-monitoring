@@ -25,13 +25,13 @@ public final class LambdaWidget {
     public static final String SEARCH_EXPRESSION_TEMPLATE =
         "SEARCH('{AWS/Lambda,FunctionName} MetricName=\"%s\"', '%s', %d)";
     public static final String FUNCTION_NAME_LABEL = "${PROP('Dim.FunctionName')}";
-    private static final int CONCURRENCY_WIDGET_HEIGHT = 4;
-    private static final int CONCURRENCY_WIDGET_WIDTH = 10;
-    private static final int CONCURRENCY_WIDGET_X = 0;
-    private static final int CONCURRENCY_WIDGET_Y = 4;
+    private static final int CONCURRENCY_WIDGET_HEIGHT = 3;
+    private static final int CONCURRENCY_WIDGET_WIDTH = 12;
+    private static final int CONCURRENCY_WIDGET_X = 6;
+    private static final int CONCURRENCY_WIDGET_Y = 0;
     private static final int GRAPH_HEIGHT = 6;
     private static final int GRAPH_WIDTH = 6;
-    private static final int GRAPH_ROW_Y = 30;
+    private static final int GRAPH_ROW_Y = 3;
 
     private LambdaWidget() {
     }

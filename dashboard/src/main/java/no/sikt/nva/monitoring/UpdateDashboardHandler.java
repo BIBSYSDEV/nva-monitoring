@@ -3,8 +3,8 @@ package no.sikt.nva.monitoring;
 import com.amazonaws.services.lambda.runtime.Context;
 import com.amazonaws.services.lambda.runtime.RequestHandler;
 import com.amazonaws.services.lambda.runtime.events.CloudFormationCustomResourceEvent;
-import java.util.ArrayList;
 import java.util.List;
+import java.util.stream.Stream;
 import no.sikt.nva.monitoring.model.CloudWatchWidget;
 import no.sikt.nva.monitoring.model.DashboardBody;
 import no.sikt.nva.monitoring.model.factory.AlarmWidgetFactory;
@@ -29,6 +29,8 @@ public class UpdateDashboardHandler implements RequestHandler<CloudFormationCust
     public static final String API_REQUEST_COUNT_WIDGET_NAME = "Count";
     public static final String API_ERRORS_4XX_WIDGET_NAME = "4XXError";
     public static final String API_ERRORS_5XX_WIDGET_NAME = "5XXError";
+    public static final int LOG_5XX_X_COORDINATE = 0;
+    public static final int LOG_4XX_X_COORDINATE = 12;
     private final CloudWatchClient cloudWatchClient;
     private final CloudWatchLogsClient cloudWatchLogsClient;
     private final String dashboardName;
@@ -72,19 +74,18 @@ public class UpdateDashboardHandler implements RequestHandler<CloudFormationCust
         var apiGatewayCountWidget = apigatewayFactory.creatCloudWatchWidget(2, API_REQUEST_COUNT_WIDGET_NAME);
         var logWidgetFactory = new LogWidgetFactory(cloudWatchLogsClient);
         var log5xxWidget = logWidgetFactory.createLogWidgetForApiGatewayLogs(
-            API_GATEWAY_5XX_ERROR_LOG, FILTER_FOR_5XX_ERRORS);
+            API_GATEWAY_5XX_ERROR_LOG, FILTER_FOR_5XX_ERRORS, LOG_5XX_X_COORDINATE);
         var log4xxWidget = logWidgetFactory.createLogWidgetForApiGatewayLogs(
-            API_GATEWAY_4XX_ERROR_LOG, FILTER_FOR_4XX_ERRORS);
+            API_GATEWAY_4XX_ERROR_LOG, FILTER_FOR_4XX_ERRORS, LOG_4XX_X_COORDINATE);
         var lambdaConcurrencyWidget = LambdaWidget.createConcurrencyWidget();
-        var widgets = new ArrayList<CloudWatchWidget>(List.of(documentationLinksWidget,
-                                                              alarmWidget,
-                                                              lambdaConcurrencyWidget,
-                                                              apiGateway5xxWidget,
-                                                              apiGateway4xxWidget,
-                                                              apiGatewayCountWidget,
-                                                              log5xxWidget,
-                                                              log4xxWidget));
-        widgets.addAll(LambdaWidget.createPerFunctionGraphs());
-        return widgets;
+        var staticWidgets = Stream.<CloudWatchWidget>of(documentationLinksWidget,
+                                                        alarmWidget,
+                                                        lambdaConcurrencyWidget,
+                                                        apiGateway5xxWidget,
+                                                        apiGateway4xxWidget,
+                                                        apiGatewayCountWidget,
+                                                        log5xxWidget,
+                                                        log4xxWidget);
+        return Stream.concat(staticWidgets, LambdaWidget.createPerFunctionGraphs().stream()).toList();
     }
 }

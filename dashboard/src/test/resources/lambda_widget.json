@@ -1,8 +1,8 @@
 {
-  "height": 4,
-  "width": 10,
-  "y": 4,
-  "x": 0,
+  "height": 3,
+  "width": 12,
+  "y": 0,
+  "x": 6,
   "type": "metric",
   "properties": {
     "metrics": [

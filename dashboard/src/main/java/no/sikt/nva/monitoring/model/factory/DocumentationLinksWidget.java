@@ -15,9 +15,9 @@ public final class DocumentationLinksWidget {
     public static final String MARKDOWN =
         "[Instructions](%s) | [Incident response](%s) | [Redrive DLQ](%s)"
             .formatted(INSTRUCTIONS_URL, INCIDENT_RESPONSE_URL, REDRIVE_DLQ_URL);
-    public static final int HEIGHT = 1;
-    public static final int WIDTH = 24;
-    public static final int X_COORDINATE = 0;
+    public static final int HEIGHT = 3;
+    public static final int WIDTH = 6;
+    public static final int X_COORDINATE = 18;
     public static final int Y_COORDINATE = 0;
 
     private DocumentationLinksWidget() {

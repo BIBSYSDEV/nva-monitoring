@@ -3,11 +3,13 @@ package no.sikt.nva.monitoring;
 import com.amazonaws.services.lambda.runtime.Context;
 import com.amazonaws.services.lambda.runtime.RequestHandler;
 import com.amazonaws.services.lambda.runtime.events.CloudFormationCustomResourceEvent;
+import java.util.ArrayList;
 import java.util.List;
 import no.sikt.nva.monitoring.model.CloudWatchWidget;
 import no.sikt.nva.monitoring.model.DashboardBody;
 import no.sikt.nva.monitoring.model.factory.AlarmWidgetFactory;
 import no.sikt.nva.monitoring.model.factory.ApiGatewayWidgetFactory;
+import no.sikt.nva.monitoring.model.factory.DocumentationLinksWidget;
 import no.sikt.nva.monitoring.model.factory.LogWidgetFactory;
 import nva.commons.core.Environment;
 import nva.commons.core.JacocoGenerated;
@@ -62,6 +64,7 @@ public class UpdateDashboardHandler implements RequestHandler<CloudFormationCust
     }
 
     private List<CloudWatchWidget> createWidgets() {
+        var documentationLinksWidget = DocumentationLinksWidget.create();
         var alarmWidget = new AlarmWidgetFactory(cloudWatchClient).creatCloudWatchWidget();
         var apigatewayFactory = new ApiGatewayWidgetFactory(apiGatewayClient);
         var apiGateway5xxWidget = apigatewayFactory.creatCloudWatchWidget(0, API_ERRORS_5XX_WIDGET_NAME);
@@ -72,13 +75,16 @@ public class UpdateDashboardHandler implements RequestHandler<CloudFormationCust
             API_GATEWAY_5XX_ERROR_LOG, FILTER_FOR_5XX_ERRORS);
         var log4xxWidget = logWidgetFactory.createLogWidgetForApiGatewayLogs(
             API_GATEWAY_4XX_ERROR_LOG, FILTER_FOR_4XX_ERRORS);
-        var lambdaWidget = LambdaWidget.create();
-        return List.of(alarmWidget,
-                       lambdaWidget,
-                       apiGateway5xxWidget,
-                       apiGateway4xxWidget,
-                       apiGatewayCountWidget,
-                       log5xxWidget,
-                       log4xxWidget);
+        var lambdaConcurrencyWidget = LambdaWidget.createConcurrencyWidget();
+        var widgets = new ArrayList<CloudWatchWidget>(List.of(documentationLinksWidget,
+                                                              alarmWidget,
+                                                              lambdaConcurrencyWidget,
+                                                              apiGateway5xxWidget,
+                                                              apiGateway4xxWidget,
+                                                              apiGatewayCountWidget,
+                                                              log5xxWidget,
+                                                              log4xxWidget));
+        widgets.addAll(LambdaWidget.createPerFunctionGraphs());
+        return widgets;
     }
 }

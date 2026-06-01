@@ -19,6 +19,7 @@ public class AlarmWidgetFactory {
     public static final int Y_COORDINATE = 0;
     public static final String STATE_UPDATED_TIMESTAMP = "stateUpdatedTimestamp";
     public static final String ALARM = "alarm";
+    public static final String ALARM_STATE = "ALARM";
     private final CloudWatchClient cloudWatchClient;
 
     public AlarmWidgetFactory(CloudWatchClient cloudWatchClient) {
@@ -30,7 +31,7 @@ public class AlarmWidgetFactory {
     }
 
     private AlarmProperties createAlarmProperties() {
-        return new AlarmProperties(ALARMS, retrieveExistingAlarms(), STATE_UPDATED_TIMESTAMP);
+        return new AlarmProperties(ALARMS, retrieveExistingAlarms(), STATE_UPDATED_TIMESTAMP, List.of(ALARM_STATE));
     }
 
     private List<String> retrieveExistingAlarms() {

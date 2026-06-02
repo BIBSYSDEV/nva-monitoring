@@ -1,11 +1,25 @@
 package no.sikt.nva.monitoring;
 
+import static no.sikt.nva.monitoring.LambdaWidget.ASYNC_EVENT_AGE;
+import static no.sikt.nva.monitoring.LambdaWidget.ERRORS;
+import static no.sikt.nva.monitoring.LambdaWidget.FUNCTION_NAME_LABEL;
+import static no.sikt.nva.monitoring.LambdaWidget.INVOCATIONS;
+import static no.sikt.nva.monitoring.LambdaWidget.MAXIMUM_STAT;
+import static no.sikt.nva.monitoring.LambdaWidget.METRIC;
+import static no.sikt.nva.monitoring.LambdaWidget.PERIOD_5_MINUTES;
+import static no.sikt.nva.monitoring.LambdaWidget.SEARCH_EXPRESSION_TEMPLATE;
+import static no.sikt.nva.monitoring.LambdaWidget.SUM_STAT;
+import static no.sikt.nva.monitoring.LambdaWidget.THROTTLES;
+import static no.sikt.nva.monitoring.LambdaWidget.TIME_SERIES;
 import static no.sikt.nva.monitoring.UpdateDashboardHandler.API_ERRORS_4XX_WIDGET_NAME;
 import static no.sikt.nva.monitoring.UpdateDashboardHandler.API_ERRORS_5XX_WIDGET_NAME;
 import static no.sikt.nva.monitoring.UpdateDashboardHandler.API_REQUEST_COUNT_WIDGET_NAME;
 import static no.sikt.nva.monitoring.model.factory.AlarmWidgetFactory.ALARM;
 import static no.sikt.nva.monitoring.model.factory.AlarmWidgetFactory.ALARMS;
+import static no.sikt.nva.monitoring.model.factory.AlarmWidgetFactory.ALARM_STATE;
 import static no.sikt.nva.monitoring.model.factory.AlarmWidgetFactory.STATE_UPDATED_TIMESTAMP;
+import static no.sikt.nva.monitoring.model.factory.DocumentationLinksWidget.MARKDOWN;
+import static no.sikt.nva.monitoring.model.factory.DocumentationLinksWidget.TEXT;
 import static no.sikt.nva.monitoring.model.factory.ApiGatewayWidgetFactory.API_NAME;
 import static no.sikt.nva.monitoring.model.factory.ApiGatewayWidgetFactory.AWS_API_GATEWAY;
 import static no.sikt.nva.monitoring.model.factory.ApiGatewayWidgetFactory.NOT_STACKED;
@@ -33,8 +47,11 @@ import java.util.List;
 import no.sikt.nva.monitoring.model.AlarmProperties;
 import no.sikt.nva.monitoring.model.CloudWatchWidget;
 import no.sikt.nva.monitoring.model.DashboardBody;
+import no.sikt.nva.monitoring.model.LambdaGraphProperties;
 import no.sikt.nva.monitoring.model.LogProperties;
 import no.sikt.nva.monitoring.model.MetricProperties;
+import no.sikt.nva.monitoring.model.MetricSearchExpression;
+import no.sikt.nva.monitoring.model.TextProperties;
 import no.sikt.nva.monitoring.utils.FakeApiGatewayClient;
 import no.sikt.nva.monitoring.utils.FakeCloudWatchClient;
 import no.sikt.nva.monitoring.utils.FakeCloudWatchClientThrowingException;
@@ -74,9 +91,12 @@ public class UpdateDashboardHandlerTest {
     private static final CloudFormationCustomResourceEvent EVENT = CloudFormationCustomResourceEvent.builder().build();
     private static final String EXPECTED_ALARM_WIDGET =
         new CloudWatchWidget<>(ALARM, new AlarmProperties(ALARMS, List.of(ALARM_ARN_1, ALARM_ARN_2),
-                                                          STATE_UPDATED_TIMESTAMP), IGNORED, IGNORED,
+                                                          STATE_UPDATED_TIMESTAMP, List.of(ALARM_STATE)), IGNORED,
+                               IGNORED,
                                IGNORED,
                                IGNORED).toJsonString();
+    private static final String EXPECTED_DOCUMENTATION_LINKS_WIDGET =
+        new CloudWatchWidget<>(TEXT, new TextProperties(MARKDOWN), IGNORED, IGNORED, IGNORED, IGNORED).toJsonString();
     private static final String EXPECTED_5XX_WIDGET =
         new CloudWatchWidget<>(TYPE, METRIC_PROPERTIES_5XX, IGNORED, IGNORED, IGNORED, IGNORED).toJsonString();
     private static final String EXPECTED_4XX_WIDGET =
@@ -86,8 +106,8 @@ public class UpdateDashboardHandlerTest {
     public static final String EXPECTED_LOG_QUERY =
         "SOURCE 'master-pipelines-testLogGroup-ApiAccessLogGroup' "
         + "| filter @message like /\"status\"\\s*:\\s*\"5\\d{2}\"/ "
-        + "| fields httpMethod, path, status, error.message "
-        + "| stats count() as ErrorCount by httpMethod, path, status, error.message "
+        + "| fields httpMethod, path, status "
+        + "| stats count() as ErrorCount by httpMethod, path, status "
         + "| sort ErrorCount desc "
         + "| limit 100";
     public static final String LAMBDA_WIDGET_JSON = "lambda_widget.json";
@@ -188,6 +208,35 @@ public class UpdateDashboardHandlerTest {
         var expectedLambdaWidget = JsonUtils.dtoObjectMapper.readValue(EXPECTED_LAMBDA_WIDGET, CloudWatchWidget.class);
 
         assertThat(dashboardBody.widgets(), hasItem(expectedLambdaWidget));
+    }
+
+    @Test
+    void shouldUpdateDashboardWithDocumentationLinks() throws JsonProcessingException {
+        handler.handleRequest(EVENT, mockContext);
+        var dashboardBody = getDashboardBody();
+        var expectedWidget = JsonUtils.dtoObjectMapper.readValue(EXPECTED_DOCUMENTATION_LINKS_WIDGET,
+                                                                 CloudWatchWidget.class);
+        assertThat(dashboardBody.widgets(), hasItem(expectedWidget));
+    }
+
+    @Test
+    void shouldUpdateDashboardWithPerFunctionLambdaGraphs() throws JsonProcessingException {
+        handler.handleRequest(EVENT, mockContext);
+        var dashboardBody = getDashboardBody();
+        assertThat(dashboardBody.widgets(), hasItem(expectedPerFunctionGraph(ERRORS, SUM_STAT)));
+        assertThat(dashboardBody.widgets(), hasItem(expectedPerFunctionGraph(THROTTLES, SUM_STAT)));
+        assertThat(dashboardBody.widgets(), hasItem(expectedPerFunctionGraph(INVOCATIONS, SUM_STAT)));
+        assertThat(dashboardBody.widgets(), hasItem(expectedPerFunctionGraph(ASYNC_EVENT_AGE, MAXIMUM_STAT)));
+    }
+
+    private static CloudWatchWidget expectedPerFunctionGraph(String metricName, String stat)
+        throws JsonProcessingException {
+        var expression = SEARCH_EXPRESSION_TEMPLATE.formatted(metricName, stat, PERIOD_5_MINUTES);
+        List<List<Object>> metrics = List.of(List.of(new MetricSearchExpression(expression, FUNCTION_NAME_LABEL)));
+        var properties = new LambdaGraphProperties(metrics, metricName, TIME_SERIES, REGION, stat, PERIOD_5_MINUTES,
+                                                   true);
+        var widget = new CloudWatchWidget<>(METRIC, properties, IGNORED, IGNORED, IGNORED, IGNORED).toJsonString();
+        return JsonUtils.dtoObjectMapper.readValue(widget, CloudWatchWidget.class);
     }
 
     private static List<String> getAlarmArns(DashboardBody dashboardBody) {

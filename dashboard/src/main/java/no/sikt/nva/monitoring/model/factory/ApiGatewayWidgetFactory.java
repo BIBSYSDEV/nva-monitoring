@@ -17,7 +17,7 @@ public class ApiGatewayWidgetFactory {
     public static final boolean NOT_STACKED = false;
     public static final int HEIGHT = 9;
     public static final int WIDTH = 8;
-    public static final int Y_COORDINATE = 8;
+    public static final int Y_COORDINATE = 9;
     public static final String AWS_API_GATEWAY = "AWS/ApiGateway";
     public static final String API_NAME = "ApiName";
     private final ApiGatewayClient apiGatewayClient;

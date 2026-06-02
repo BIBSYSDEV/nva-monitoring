@@ -1,8 +1,8 @@
 {
-  "height": 4,
-  "width": 24,
+  "height": 3,
+  "width": 12,
   "y": 0,
-  "x": 5,
+  "x": 6,
   "type": "metric",
   "properties": {
     "metrics": [
@@ -10,21 +10,24 @@
         "AWS/Lambda",
         "Errors",
         {
-          "region": "eu-west-1"
+          "region": "eu-west-1",
+          "visible": false
         }
       ],
       [
         "AWS/Lambda",
         "Throttles",
         {
-          "region": "eu-west-1"
+          "region": "eu-west-1",
+          "visible": false
         }
       ],
       [
         "AWS/Lambda",
         "Invocations",
         {
-          "region": "eu-west-1"
+          "region": "eu-west-1",
+          "visible": false
         }
       ],
       [
@@ -48,7 +51,8 @@
         "AsyncEventAge",
         {
           "stat": "Maximum",
-          "region": "eu-west-1"
+          "region": "eu-west-1",
+          "visible": false
         }
       ]
     ],

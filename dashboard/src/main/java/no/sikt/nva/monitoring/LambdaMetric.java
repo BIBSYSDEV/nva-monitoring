@@ -1,6 +1,6 @@
 package no.sikt.nva.monitoring;
 
-public record LambdaMetric(String stat, String region) {
+public record LambdaMetric(String stat, String region, Boolean visible) {
 
     public static Builder builder() {
         return new Builder();
@@ -10,6 +10,7 @@ public record LambdaMetric(String stat, String region) {
 
         private String stat;
         private String region;
+        private Boolean visible;
 
         private Builder() {
         }
@@ -24,8 +25,13 @@ public record LambdaMetric(String stat, String region) {
             return this;
         }
 
+        public Builder withVisible(Boolean visible) {
+            this.visible = visible;
+            return this;
+        }
+
         public LambdaMetric build() {
-            return new LambdaMetric(stat, region);
+            return new LambdaMetric(stat, region, visible);
         }
     }
 }

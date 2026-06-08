@@ -1,18 +1,3 @@
 plugins {
     id 'nva.monitoring.rootplugin'
 }
-
-allprojects{
-    apply plugin: 'nva.monitoring.java-common-conventions'
-}
-
-group = 'com.github.bibsysdev'
-version = '1.0-SNAPSHOT'
-
-repositories {
-    mavenCentral()
-}
-
-tasks.withType(JavaCompile).configureEach {
-    options.release = 21
-}

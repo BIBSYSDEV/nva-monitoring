@@ -1,70 +1,20 @@
 plugins {
-    id 'java'
-    id 'pmd'
-    id 'jacoco-report-aggregation'
+    id 'nva.java-conventions'
 }
 
-
-group = 'com.github.bibsysdev'
-
+nva {
+    errorprone {
+        allErrorsAsWarnings = false
+    }
+    pmd {
+        rulesetFile = rootProject.file('config/pmd/ruleset.xml')
+    }
+    spotless {
+        enabled = false
+    }
+}
 dependencies {
-    testRuntimeOnly libs.junit.jupiter.engine
-
-
-    // This is required until Gradle TestSuites are used, note no version is specified as this syncs
-    // with JUnit from gradle.
-    testRuntimeOnly(group: 'org.junit.platform', name: 'junit-platform-launcher')
-}
-
-java {
-    sourceCompatibility = JavaVersion.VERSION_21
-    targetCompatibility = JavaVersion.VERSION_21
-}
-
-repositories {
-    mavenCentral()
-}
-
-tasks.named('test') {
-    environment "API_HOST", "localhost"
-    useJUnitPlatform {
-        excludeTags "RemoteTest", "integrationTest", "KarateTest"
-    }
-    failFast = true
-    testLogging {
-        events 'skipped', 'passed', 'failed'
-        showCauses true
-        exceptionFormat "full"
-    }
-}
-
-pmd {
-    toolVersion = '7.11.0'
-    ruleSetConfig = rootProject.resources.text.fromFile('config/pmd/ruleset.xml')
-    ruleSets = []
-    ignoreFailures = false
-}
-
-check.dependsOn jacocoTestCoverageVerification
-jacocoTestCoverageVerification.dependsOn(jacocoTestReport)
-
-jacocoTestCoverageVerification {
-
-    violationRules {
-        rule {
-            limit {
-                counter = 'METHOD'
-                value = 'COVEREDRATIO'
-                minimum = 1.000
-            }
-        }
-
-        rule {
-            limit {
-                counter = 'CLASS'
-                value = 'COVEREDRATIO'
-                minimum = 1.000
-            }
-        }
-    }
+    implementation(platform(nvaCatalog.aws.sdk.bom))
+    implementation(platform(nvaCatalog.aws.sdk2.bom))
+    testImplementation(platform(nvaCatalog.junit.bom))
 }

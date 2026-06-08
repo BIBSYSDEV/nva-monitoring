@@ -1,15 +1,30 @@
+plugins {
+    id 'nva.monitoring.java-common-conventions'
+}
+
 dependencies {
-    implementation libs.aws.lambda.java.core
-    implementation libs.aws.lambda.events
-    implementation libs.bundles.logging
-    implementation libs.aws.cloudwatch
-    implementation libs.aws.cloudwatch.logs
-    implementation libs.aws.lambda
-    implementation libs.aws.apigateway
-    implementation libs.nva.core
-    implementation libs.bundles.jackson
-    implementation libs.nva.json
-    testImplementation libs.bundles.testing
+    api(libs.aws.apigateway)
+    api(libs.aws.cloudwatch)
+    api(libs.aws.cloudwatch.logs)
+    api(nvaCatalog.aws.lambda.core)
+    api(nvaCatalog.aws.lambda.events)
+    api(nvaLibs.json)
+    implementation(nvaCatalog.aws.sdk2.regions)
+    implementation(nvaLibs.core)
+    runtimeOnly(libs.aws.lambda)
+    runtimeOnly(nvaCatalog.jackson.core)
+    runtimeOnly(nvaCatalog.jackson.datatype.jdk8)
+    runtimeOnly(nvaCatalog.jackson.datatype.jsr310)
+    runtimeOnly(nvaCatalog.log4j.slf4j.impl)
+    testImplementation(nvaCatalog.aws.sdk2.aws.core)
+    testImplementation(nvaCatalog.aws.sdk2.sdk.core)
+    testImplementation(nvaCatalog.hamcrest)
+    testImplementation(nvaCatalog.jackson.core)
+    testImplementation(nvaCatalog.jackson.databind)
+    testImplementation(nvaCatalog.junit.jupiter.api)
+    testImplementation(nvaCatalog.mockito.core)
+    testRuntimeOnly(nvaCatalog.junit.jupiter.engine)
+    testRuntimeOnly(nvaCatalog.junit.platform.launcher)
 }
 
 test {

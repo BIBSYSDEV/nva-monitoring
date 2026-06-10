@@ -12,47 +12,51 @@ import software.amazon.awssdk.services.cloudwatch.model.MetricAlarm;
 
 public class AlarmWidgetFactory {
 
-    public static final String ALARMS = "alarms";
-    public static final int WIDTH = 6;
-    public static final int HEIGHT = 3;
-    public static final int X_COORDINATE = 0;
-    public static final int Y_COORDINATE = 0;
-    public static final String STATE_UPDATED_TIMESTAMP = "stateUpdatedTimestamp";
-    public static final String ALARM = "alarm";
-    public static final String ALARM_STATE = "ALARM";
-    private final CloudWatchClient cloudWatchClient;
+  public static final String ALARMS = "alarms";
+  public static final int WIDTH = 6;
+  public static final int HEIGHT = 3;
+  public static final int X_COORDINATE = 0;
+  public static final int Y_COORDINATE = 0;
+  public static final String STATE_UPDATED_TIMESTAMP = "stateUpdatedTimestamp";
+  public static final String ALARM = "alarm";
+  public static final String ALARM_STATE = "ALARM";
+  private final CloudWatchClient cloudWatchClient;
 
-    public AlarmWidgetFactory(CloudWatchClient cloudWatchClient) {
-        this.cloudWatchClient = cloudWatchClient;
-    }
+  public AlarmWidgetFactory(CloudWatchClient cloudWatchClient) {
+    this.cloudWatchClient = cloudWatchClient;
+  }
 
-    public CloudWatchWidget<AlarmProperties> creatCloudWatchWidget() {
-        return new CloudWatchWidget<>(ALARM, createAlarmProperties(), HEIGHT, WIDTH, X_COORDINATE, Y_COORDINATE);
-    }
+  public CloudWatchWidget<AlarmProperties> creatCloudWatchWidget() {
+    return new CloudWatchWidget<>(
+        ALARM, createAlarmProperties(), HEIGHT, WIDTH, X_COORDINATE, Y_COORDINATE);
+  }
 
-    private AlarmProperties createAlarmProperties() {
-        return new AlarmProperties(ALARMS, retrieveExistingAlarms(), STATE_UPDATED_TIMESTAMP, List.of(ALARM_STATE));
-    }
+  private AlarmProperties createAlarmProperties() {
+    return new AlarmProperties(
+        ALARMS, retrieveExistingAlarms(), STATE_UPDATED_TIMESTAMP, List.of(ALARM_STATE));
+  }
 
-    private List<String> retrieveExistingAlarms() {
-        var alarmsResponse = cloudWatchClient.describeAlarms();
-        return extractAlarmArns(alarmsResponse);
-    }
+  private List<String> retrieveExistingAlarms() {
+    var alarmsResponse = cloudWatchClient.describeAlarms();
+    return extractAlarmArns(alarmsResponse);
+  }
 
-    private List<String> extractAlarmArns(DescribeAlarmsResponse alarmsResponse) {
-        var alarmsArns = new ArrayList<String>();
-        var metricAlarmsArn = alarmsResponse.metricAlarms().stream().map(MetricAlarm::alarmArn).toList();
-        if (!metricAlarmsArn.isEmpty()) {
-            alarmsArns.addAll(metricAlarmsArn.stream().filter(alarmFilter()).toList());
-        }
-        var compositeAlarms = alarmsResponse.compositeAlarms().stream().map(CompositeAlarm::alarmArn).toList();
-        if (!compositeAlarms.isEmpty()) {
-            alarmsArns.addAll(compositeAlarms);
-        }
-        return alarmsArns;
+  private List<String> extractAlarmArns(DescribeAlarmsResponse alarmsResponse) {
+    var alarmsArns = new ArrayList<String>();
+    var metricAlarmsArn =
+        alarmsResponse.metricAlarms().stream().map(MetricAlarm::alarmArn).toList();
+    if (!metricAlarmsArn.isEmpty()) {
+      alarmsArns.addAll(metricAlarmsArn.stream().filter(alarmFilter()).toList());
     }
+    var compositeAlarms =
+        alarmsResponse.compositeAlarms().stream().map(CompositeAlarm::alarmArn).toList();
+    if (!compositeAlarms.isEmpty()) {
+      alarmsArns.addAll(compositeAlarms);
+    }
+    return alarmsArns;
+  }
 
-    private static Predicate<String> alarmFilter() {
-        return arn -> !arn.contains(":alarm:TargetTracking-function:");
-    }
+  private static Predicate<String> alarmFilter() {
+    return arn -> !arn.contains(":alarm:TargetTracking-function:");
+  }
 }

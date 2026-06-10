@@ -1,4 +1,4 @@
-AWSTemplateFormatVersion: '2010-09-09'
+AWSTemplateFormatVersion: "2010-09-09"
 Transform: AWS::Serverless-2016-10-31
 Description: Template stack for NVA monitoring
 
@@ -15,15 +15,14 @@ Globals:
 
 Parameters:
   NvaMonitoringDashBoardName:
-    Type: 'String'
-    Default: 'NvaMonitoringDashboard'
+    Type: "String"
+    Default: "NvaMonitoringDashboard"
     Description: Name monitoring dashboard that will be updated by this lambda
   SlackSnsArn:
     Type: AWS::SSM::Parameter::Value<String>
-    Default: '/NVA/Monitoring/SlackSnsArn'
+    Default: "/NVA/Monitoring/SlackSnsArn"
 
 Resources:
-
   UpdateDashboardHandlerLogGroup:
     Type: "AWS::Logs::LogGroup"
     Properties:
@@ -35,14 +34,13 @@ Resources:
     Properties:
       Path: /
       AssumeRolePolicyDocument:
-        Version: '2012-10-17'
+        Version: "2012-10-17"
         Statement:
           - Effect: Allow
             Principal:
               Service:
                 - lambda.amazonaws.com
             Action: sts:AssumeRole
-
 
   DefaultLambdaPermissions:
     Type: AWS::IAM::Policy
@@ -51,7 +49,7 @@ Resources:
       Roles:
         - !Ref LambdaRole
       PolicyDocument:
-        Version: '2012-10-17'
+        Version: "2012-10-17"
         Statement:
           - Effect: Allow
             Action:
@@ -70,7 +68,7 @@ Resources:
       Roles:
         - !Ref LambdaRole
       PolicyDocument:
-        Version: '2012-10-17'
+        Version: "2012-10-17"
         Statement:
           - Effect: Allow
             Action:
@@ -86,13 +84,12 @@ Resources:
       Roles:
         - !Ref LambdaRole
       PolicyDocument:
-        Version: '2012-10-17'
+        Version: "2012-10-17"
         Statement:
           - Effect: Allow
             Action:
               - Apigateway:GET
             Resource: "*"
-
 
   UpdateDashboardHandler:
     Type: AWS::Serverless::Function
@@ -129,8 +126,7 @@ Resources:
     Type: AWS::CloudWatch::Dashboard
     Properties:
       DashboardName: !Sub "${NvaMonitoringDashBoardName}-${AWS::AccountId}"
-      DashboardBody: "{\"widgets\":[]}"
-
+      DashboardBody: '{"widgets":[]}'
 
   CostAnomalySubscription:
     Type: "AWS::CE::AnomalySubscription"
@@ -143,22 +139,22 @@ Resources:
           Type: "SNS"
       ThresholdExpression: '{
         "And": [
-          {
-            "Dimensions": {
-              "Key": "ANOMALY_TOTAL_IMPACT_PERCENTAGE",
-              "MatchOptions": [ "GREATER_THAN_OR_EQUAL" ],
-              "Values": [ "70" ]
-            }
-          },
-          {
-            "Dimensions": {
-              "Key": "ANOMALY_TOTAL_IMPACT_ABSOLUTE",
-              "MatchOptions": [ "GREATER_THAN_OR_EQUAL" ],
-              "Values": [ "50" ]
-            }
-          }
+        {
+        "Dimensions": {
+        "Key": "ANOMALY_TOTAL_IMPACT_PERCENTAGE",
+        "MatchOptions": [ "GREATER_THAN_OR_EQUAL" ],
+        "Values": [ "70" ]
+        }
+        },
+        {
+        "Dimensions": {
+        "Key": "ANOMALY_TOTAL_IMPACT_ABSOLUTE",
+        "MatchOptions": [ "GREATER_THAN_OR_EQUAL" ],
+        "Values": [ "50" ]
+        }
+        }
         ]
-      }'
+        }'
       SubscriptionName: "Cost Anomaly Subscription"
 
   CostAnomalyMonitor:
@@ -176,7 +172,7 @@ Resources:
       MetricName: "AnomalyDetection"
       Namespace: "AWS/CostExplorer"
       Statistic: "Maximum"
-      Period: 600  # Check every 10 minutes
+      Period: 600 # Check every 10 minutes
       EvaluationPeriods: 1
       Threshold: 1
       ComparisonOperator: "GreaterThanOrEqualToThreshold"

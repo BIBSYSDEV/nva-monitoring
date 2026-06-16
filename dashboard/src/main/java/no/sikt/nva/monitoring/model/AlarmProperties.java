@@ -4,6 +4,4 @@ import java.util.List;
 import no.unit.nva.commons.json.JsonSerializable;
 
 public record AlarmProperties(String title, List<String> alarms, String sortBy, List<String> states)
-    implements WidgetProperties, JsonSerializable {
-
-}
+    implements WidgetProperties, JsonSerializable {}

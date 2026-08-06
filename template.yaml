@@ -157,6 +157,42 @@ Resources:
         }'
       SubscriptionName: "Cost Anomaly Subscription"
 
+  InspectorFindingEventRule:
+    Type: "AWS::Events::Rule"
+    Properties:
+      Description: "Forward active HIGH and CRITICAL Inspector findings to Slack"
+      EventPattern:
+        source:
+          - "aws.inspector2"
+        detail-type:
+          - "Inspector2 Finding"
+        detail:
+          severity:
+            - "HIGH"
+            - "CRITICAL"
+          status:
+            - "ACTIVE"
+      Targets:
+        - Id: "SlackSnsTopic"
+          Arn: !Ref SlackSnsArn
+          # AWS Chatbot drops SNS messages it does not recognize, so the event is
+          # rewritten to Chatbot's custom notification schema before publishing.
+          InputTransformer:
+            InputPathsMap:
+              severity: "$.detail.severity"
+              title: "$.detail.title"
+              resource: "$.detail.resources[0].id"
+            InputTemplate: |
+              {
+                "version": "1.0",
+                "source": "custom",
+                "content": {
+                  "textType": "client-markdown",
+                  "title": ":rotating_light: Inspector finding (<severity>)",
+                  "description": "<title>\nResource: `<resource>`"
+                }
+              }
+
   CostAnomalyMonitor:
     Type: "AWS::CE::AnomalyMonitor"
     Properties:

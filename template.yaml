@@ -192,6 +192,51 @@ Resources:
                 }
               }
 
+  InspectorDigestHandlerLogGroup:
+    Type: "AWS::Logs::LogGroup"
+    Properties:
+      RetentionInDays: 30
+      LogGroupName: !Join ["", ["/aws/lambda/", !Ref InspectorDigestHandler]]
+
+  InspectorDigestPermissions:
+    Type: AWS::IAM::Policy
+    Properties:
+      PolicyName: !Sub InspectorDigestPermissions-${AWS::StackName}
+      Roles:
+        - !Ref LambdaRole
+      PolicyDocument:
+        Version: "2012-10-17"
+        Statement:
+          - Effect: Allow
+            Action:
+              - inspector2:ListFindings
+            Resource: "*"
+          - Effect: Allow
+            Action:
+              - sns:Publish
+            Resource: !Ref SlackSnsArn
+
+  InspectorDigestHandler:
+    Type: AWS::Serverless::Function
+    DependsOn:
+      - DefaultLambdaPermissions
+      - InspectorDigestPermissions
+    Properties:
+      CodeUri: inspector-digest
+      Handler: no.sikt.nva.monitoring.InspectorDigestHandler::handleRequest
+      Timeout: 300
+      Role: !GetAtt LambdaRole.Arn
+      Environment:
+        Variables:
+          NEW_FINDING_MAX_AGE_HOURS: "24"
+          SLACK_SNS_TOPIC_ARN: !Ref SlackSnsArn
+      Events:
+        DailyDigest:
+          Type: Schedule
+          Properties:
+            Schedule: "cron(0 6 * * ? *)"
+            Description: "Daily digest of active HIGH and CRITICAL Inspector package vulnerability findings"
+
   CostAnomalyMonitor:
     Type: "AWS::CE::AnomalyMonitor"
     Properties:

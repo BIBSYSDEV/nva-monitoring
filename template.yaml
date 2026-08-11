@@ -160,7 +160,7 @@ Resources:
   InspectorFindingEventRule:
     Type: "AWS::Events::Rule"
     Properties:
-      Description: "Forward active HIGH and CRITICAL Inspector findings to Slack"
+      Description: "Forward active CRITICAL Inspector findings to Slack"
       EventPattern:
         source:
           - "aws.inspector2"
@@ -168,7 +168,6 @@ Resources:
           - "Inspector2 Finding"
         detail:
           severity:
-            - "HIGH"
             - "CRITICAL"
           status:
             - "ACTIVE"

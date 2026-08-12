@@ -110,7 +110,7 @@ class InspectorDigestHandlerTest {
   }
 
   @Test
-  void shouldIncludeHeadlineTotalsForAllActiveFindingsSplitBySeverity() {
+  void shouldListActiveVulnerabilityCountsPerStackIncludingOldFindings() {
     stubSinglePage(
         criticalFinding("CVE-2026-1111", "function-one"),
         criticalFinding("CVE-2026-1111", "function-two"),
@@ -128,10 +128,63 @@ class InspectorDigestHandlerTest {
 
     var description = publishedNotification().content().description();
     assertThat(description)
-        .contains("CRITICAL: 1 vulnerabilities affecting 2 stacks")
-        .contains("HIGH: 1 vulnerabilities affecting 1 stacks");
+        .contains("• `function-one`: 1 CRITICAL")
+        .contains("• `function-two`: 1 CRITICAL")
+        .contains("• `function-three`: 1 HIGH");
     assertThat(lineContaining(description, "New in the last")).contains("24 hours");
     assertThat(description).doesNotContain("CVE-2020-0001");
+  }
+
+  @Test
+  void shouldCountVulnerabilityOnceAtItsHighestSeverityWithinEachStack() {
+    stubSinglePage(
+        highFinding("CVE-2026-1111", "function-one"),
+        criticalFinding("CVE-2026-1111", "function-one"),
+        criticalFinding("CVE-2026-2222", "function-two"),
+        highFinding("CVE-2026-2222", "function-two"));
+
+    handler().handleRequest(EVENT, CONTEXT);
+
+    var description = publishedNotification().content().description();
+    assertThat(lineContaining(description, "`function-one`"))
+        .contains("1 CRITICAL")
+        .doesNotContain("HIGH");
+    assertThat(lineContaining(description, "`function-two`"))
+        .contains("1 CRITICAL")
+        .doesNotContain("HIGH");
+  }
+
+  @Test
+  void shouldListStacksWithCriticalVulnerabilitiesFirstThenByHighCount() {
+    stubSinglePage(
+        highFinding("CVE-2026-0001", "stack-one-high", "stack-two-highs"),
+        highFinding("CVE-2026-0002", "stack-two-highs"),
+        criticalFinding("CVE-2026-9999", "stack-critical"));
+
+    handler().handleRequest(EVENT, CONTEXT);
+
+    var description = publishedNotification().content().description();
+    assertThat(lineContaining(description, "`stack-two-highs`")).contains("2 HIGH");
+    assertThat(description.indexOf("stack-critical"))
+        .isLessThan(description.indexOf("stack-two-highs"));
+    assertThat(description.indexOf("stack-two-highs"))
+        .isLessThan(description.indexOf("stack-one-high"));
+  }
+
+  @Test
+  void shouldTruncateStackListWhenThereAreTooManyAffectedStacks() {
+    var stackNames =
+        IntStream.rangeClosed(1, 12).mapToObj("service-%02d"::formatted).toArray(String[]::new);
+    stubSinglePage(criticalFinding("CVE-2026-1111", stackNames));
+
+    handler().handleRequest(EVENT, CONTEXT);
+
+    var description = publishedNotification().content().description();
+    assertThat(description)
+        .contains("service-10")
+        .contains("...and 2 more")
+        .doesNotContain("service-11")
+        .doesNotContain("service-12");
   }
 
   @Test
@@ -246,7 +299,7 @@ class InspectorDigestHandlerTest {
   @Test
   void shouldTruncateVulnerabilityListWhenThereAreTooManyNewFindings() {
     var findings =
-        IntStream.rangeClosed(1, 17)
+        IntStream.rangeClosed(1, 7)
             .mapToObj(index -> criticalFinding("CVE-2026-%04d".formatted(index), "function-one"))
             .toArray(Finding[]::new);
     stubSinglePage(findings);
@@ -254,8 +307,8 @@ class InspectorDigestHandlerTest {
     handler().handleRequest(EVENT, CONTEXT);
 
     var description = publishedNotification().content().description();
-    assertThat(description).contains("CVE-2026-0015").contains("...and 2 more");
-    assertThat(description).doesNotContain("CVE-2026-0016").doesNotContain("CVE-2026-0017");
+    assertThat(description).contains("CVE-2026-0005").contains("...and 2 more");
+    assertThat(description).doesNotContain("CVE-2026-0006").doesNotContain("CVE-2026-0007");
   }
 
   @Test
@@ -276,7 +329,7 @@ class InspectorDigestHandlerTest {
 
     var description = publishedNotification().content().description();
     assertThat(lineContaining(description, "CVE-2026-1111")).contains("(1 stacks)");
-    assertThat(description).contains("CRITICAL: 1 vulnerabilities affecting 1 stacks");
+    assertThat(description).containsOnlyOnce("• `function-a`: 1 CRITICAL");
   }
 
   @Test
@@ -293,7 +346,7 @@ class InspectorDigestHandlerTest {
 
     var description = publishedNotification().content().description();
     assertThat(lineContaining(description, "CVE-2026-1111")).contains("(1 stacks)");
-    assertThat(description).contains("CRITICAL: 1 vulnerabilities affecting 1 stacks");
+    assertThat(description).containsOnlyOnce("• `nva-cristin-service`: 1 CRITICAL");
   }
 
   private static Resource stackTaggedResource(String id, String stackName) {
@@ -380,7 +433,7 @@ class InspectorDigestHandlerTest {
     return filters.stream().map(StringFilter::value).toList();
   }
 
-  private static Finding criticalFinding(String vulnerabilityId, String functionId) {
+  private static Finding criticalFinding(String vulnerabilityId, String... functionIds) {
     return finding(
         vulnerabilityId,
         "log4j-core",
@@ -389,7 +442,19 @@ class InspectorDigestHandlerTest {
         RECENTLY_OBSERVED,
         FixAvailable.YES,
         "2.17.1",
-        functionId);
+        functionIds);
+  }
+
+  private static Finding highFinding(String vulnerabilityId, String... functionIds) {
+    return finding(
+        vulnerabilityId,
+        "log4j-core",
+        "2.14.0",
+        Severity.HIGH,
+        RECENTLY_OBSERVED,
+        FixAvailable.NO,
+        NO_FIXED_VERSION,
+        functionIds);
   }
 
   private static Finding findingWithoutFirstObservedAt() {

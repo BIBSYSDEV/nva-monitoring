@@ -31,10 +31,11 @@ import software.amazon.awssdk.services.inspector2.model.StringFilter;
 import software.amazon.awssdk.services.inspector2.model.VulnerablePackage;
 
 /**
- * Builds the daily Inspector findings digest: fetches all active HIGH and CRITICAL package
- * vulnerability findings, and summarizes them as one Slack message with headline totals plus the
- * new findings aggregated per vulnerability and package. Returns nothing when no finding was first
- * observed within the max-age window.
+ * Builds the Inspector findings digest: fetches all active HIGH and CRITICAL package vulnerability
+ * findings, and summarizes them as one Slack message with headline totals plus the new findings
+ * aggregated per vulnerability and package. Returns nothing when no finding was first observed
+ * within the max-age window. The digest frequency is owned by the EventBridge schedule in
+ * template.yaml, together with the matching max-age window.
  */
 public class InspectorDigestService {
 
@@ -53,7 +54,7 @@ public class InspectorDigestService {
     this.clock = clock;
   }
 
-  public Optional<ChatbotCustomNotification> createDailyDigest(int newFindingMaxAgeHours) {
+  public Optional<ChatbotCustomNotification> createDigest(int newFindingMaxAgeHours) {
     var activeFindings = fetchActiveFindings();
     var newFindings = findingsObservedAfterCutoff(activeFindings, newFindingMaxAgeHours);
     if (newFindings.isEmpty()) {
@@ -111,7 +112,7 @@ public class InspectorDigestService {
   }
 
   private static String title(List<VulnerabilityAggregate> newVulnerabilities) {
-    return ":shield: Inspector daily digest: %d new vulnerabilities"
+    return ":shield: Inspector findings digest: %d new vulnerabilities"
         .formatted(newVulnerabilities.size());
   }
 

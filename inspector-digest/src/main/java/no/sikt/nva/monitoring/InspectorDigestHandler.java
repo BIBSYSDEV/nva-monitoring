@@ -41,7 +41,7 @@ public class InspectorDigestHandler implements RequestHandler<ScheduledEvent, Vo
   @Override
   public Void handleRequest(ScheduledEvent scheduledEvent, Context context) {
     digestService
-        .createDailyDigest(newFindingMaxAgeHours)
+        .createDigest(newFindingMaxAgeHours)
         .ifPresentOrElse(this::publish, InspectorDigestHandler::logNothingToReport);
     return null;
   }

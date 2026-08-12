@@ -228,14 +228,17 @@ Resources:
       Role: !GetAtt LambdaRole.Arn
       Environment:
         Variables:
-          NEW_FINDING_MAX_AGE_HOURS: "24"
+          # Must cover the WeeklyDigest schedule interval below plus one hour
+          # of margin (7 * 24 + 1), or findings can miss their digest.
+          NEW_FINDING_MAX_AGE_HOURS: "169"
           SLACK_SNS_TOPIC_ARN: !Ref SlackSnsArn
       Events:
-        DailyDigest:
+        WeeklyDigest:
           Type: Schedule
           Properties:
-            Schedule: "cron(0 6 * * ? *)"
-            Description: "Daily digest of active HIGH and CRITICAL Inspector package vulnerability findings"
+            # Changing the frequency requires adjusting NEW_FINDING_MAX_AGE_HOURS above.
+            Schedule: "cron(0 6 ? * MON *)"
+            Description: "Weekly digest of active HIGH and CRITICAL Inspector package vulnerability findings"
 
   CostAnomalyMonitor:
     Type: "AWS::CE::AnomalyMonitor"

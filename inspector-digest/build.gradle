@@ -1,0 +1,23 @@
+plugins {
+    id 'nva.monitoring.java-common-conventions'
+}
+
+dependencies {
+    api(libs.aws.inspector2)
+    api(nvaCatalog.aws.lambda.core)
+    api(nvaCatalog.aws.lambda.events)
+    api(nvaCatalog.aws.sdk2.sns)
+    api(nvaLibs.core)
+    api(nvaLibs.json)
+    implementation(nvaCatalog.slf4j.api)
+    testImplementation(nvaCatalog.assertj.core)
+    testImplementation(nvaCatalog.jackson.core)
+    testImplementation(nvaCatalog.jackson.databind)
+    testImplementation(nvaCatalog.junit.jupiter.api)
+    testImplementation(nvaCatalog.mockito.core)
+}
+
+test {
+    environment("SLACK_SNS_TOPIC_ARN", "arn:aws:sns:eu-west-1:123456789012:slack-topic")
+    environment("NEW_FINDING_MAX_AGE_HOURS", "24")
+}

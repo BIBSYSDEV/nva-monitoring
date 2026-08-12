@@ -8,6 +8,7 @@ import java.time.Clock;
 import java.time.Duration;
 import java.time.Instant;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Comparator;
 import java.util.LinkedHashMap;
 import java.util.List;
@@ -25,6 +26,7 @@ import software.amazon.awssdk.services.inspector2.model.FixAvailable;
 import software.amazon.awssdk.services.inspector2.model.ListFindingsRequest;
 import software.amazon.awssdk.services.inspector2.model.PackageVulnerabilityDetails;
 import software.amazon.awssdk.services.inspector2.model.Resource;
+import software.amazon.awssdk.services.inspector2.model.ResourceType;
 import software.amazon.awssdk.services.inspector2.model.Severity;
 import software.amazon.awssdk.services.inspector2.model.StringComparison;
 import software.amazon.awssdk.services.inspector2.model.StringFilter;
@@ -40,6 +42,7 @@ import software.amazon.awssdk.services.inspector2.model.VulnerablePackage;
 public class InspectorDigestService {
 
   public static final int MAX_VULNERABILITY_LINES = 15;
+  private static final int UNQUALIFIED_FUNCTION_ARN_PARTS = 7;
   private static final String UNKNOWN = "unknown";
   private static final String NO_FIXED_VERSION = "";
   private static final String ACTIVE_FINDINGS_HEADER =
@@ -135,7 +138,7 @@ public class InspectorDigestService {
         activeFindings.stream().filter(finding -> severity == finding.severity()).toList();
     var distinctVulnerabilities =
         matchingFindings.stream().map(InspectorDigestService::vulnerabilityId).distinct().count();
-    return "%s: %d vulnerabilities affecting %d Lambda functions"
+    return "%s: %d vulnerabilities affecting %d resources"
         .formatted(severity, distinctVulnerabilities, countAffectedFunctions(matchingFindings));
   }
 
@@ -155,7 +158,7 @@ public class InspectorDigestService {
   private static String vulnerabilityLine(VulnerabilityAggregate aggregate) {
     var fixPart =
         aggregate.fixedVersion().isEmpty() ? "" : " fix: %s".formatted(aggregate.fixedVersion());
-    return "• %s %s `%s %s`%s (%d functions)"
+    return "• %s %s `%s %s`%s (%d resources)"
         .formatted(
             aggregate.vulnerabilityId(),
             aggregate.severity(),
@@ -210,9 +213,25 @@ public class InspectorDigestService {
   private static long countAffectedFunctions(List<Finding> findings) {
     return findings.stream()
         .flatMap(finding -> finding.resources().stream())
-        .map(Resource::id)
+        .map(InspectorDigestService::functionIdentifier)
         .distinct()
         .count();
+  }
+
+  /**
+   * Strips the version qualifier from Lambda function ARNs, since Inspector reports each scanned
+   * version as its own resource and the affected functions would otherwise be counted once per
+   * version. Function names cannot contain colons, so any ARN segment beyond the seventh is a
+   * qualifier.
+   */
+  private static String functionIdentifier(Resource resource) {
+    if (ResourceType.AWS_LAMBDA_FUNCTION != resource.type()) {
+      return resource.id();
+    }
+    var arnParts = resource.id().split(":");
+    return arnParts.length <= UNQUALIFIED_FUNCTION_ARN_PARTS
+        ? resource.id()
+        : String.join(":", Arrays.copyOf(arnParts, UNQUALIFIED_FUNCTION_ARN_PARTS));
   }
 
   private static Optional<VulnerablePackage> firstVulnerablePackage(Finding finding) {

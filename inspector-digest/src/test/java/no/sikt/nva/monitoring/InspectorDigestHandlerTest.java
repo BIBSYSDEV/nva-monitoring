@@ -103,7 +103,7 @@ class InspectorDigestHandlerTest {
 
     var description = publishedNotification().content().description();
     assertThat(description).containsOnlyOnce("CVE-2026-1111");
-    assertThat(lineContaining(description, "CVE-2026-1111")).contains("(2 functions)");
+    assertThat(lineContaining(description, "CVE-2026-1111")).contains("(2 resources)");
   }
 
   @Test
@@ -125,8 +125,8 @@ class InspectorDigestHandlerTest {
 
     var description = publishedNotification().content().description();
     assertThat(description)
-        .contains("CRITICAL: 1 vulnerabilities affecting 2 Lambda functions")
-        .contains("HIGH: 1 vulnerabilities affecting 1 Lambda functions");
+        .contains("CRITICAL: 1 vulnerabilities affecting 2 resources")
+        .contains("HIGH: 1 vulnerabilities affecting 1 resources");
     assertThat(lineContaining(description, "New in the last")).contains("24 hours");
     assertThat(description).doesNotContain("CVE-2020-0001");
   }
@@ -225,6 +225,21 @@ class InspectorDigestHandlerTest {
     var description = publishedNotification().content().description();
     assertThat(description).contains("CVE-2026-0015").contains("...and 2 more");
     assertThat(description).doesNotContain("CVE-2026-0016").doesNotContain("CVE-2026-0017");
+  }
+
+  @Test
+  void shouldCountScannedVersionsOfTheSameFunctionAsOneFunction() {
+    var unqualifiedArn = "arn:aws:lambda:eu-west-1:123456789012:function:function-a";
+    stubSinglePage(
+        criticalFinding("CVE-2026-1111", unqualifiedArn),
+        criticalFinding("CVE-2026-1111", unqualifiedArn + ":12"),
+        criticalFinding("CVE-2026-1111", unqualifiedArn + ":13"));
+
+    handler().handleRequest(EVENT, CONTEXT);
+
+    var description = publishedNotification().content().description();
+    assertThat(lineContaining(description, "CVE-2026-1111")).contains("(1 resources)");
+    assertThat(description).contains("CRITICAL: 1 vulnerabilities affecting 1 resources");
   }
 
   private InspectorDigestHandler handler() {

@@ -11,26 +11,18 @@ import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.LinkedHashMap;
 import java.util.List;
-import java.util.Objects;
 import java.util.Optional;
-import no.sikt.nva.monitoring.model.AggregationKey;
 import no.sikt.nva.monitoring.model.ChatbotCustomNotification;
+import no.sikt.nva.monitoring.model.DigestFinding;
 import no.sikt.nva.monitoring.model.VulnerabilityAggregate;
 import software.amazon.awssdk.services.inspector2.Inspector2Client;
-import software.amazon.awssdk.services.inspector2.model.AwsLambdaFunctionDetails;
 import software.amazon.awssdk.services.inspector2.model.FilterCriteria;
-import software.amazon.awssdk.services.inspector2.model.Finding;
 import software.amazon.awssdk.services.inspector2.model.FindingStatus;
 import software.amazon.awssdk.services.inspector2.model.FindingType;
-import software.amazon.awssdk.services.inspector2.model.FixAvailable;
 import software.amazon.awssdk.services.inspector2.model.ListFindingsRequest;
-import software.amazon.awssdk.services.inspector2.model.PackageVulnerabilityDetails;
-import software.amazon.awssdk.services.inspector2.model.Resource;
-import software.amazon.awssdk.services.inspector2.model.ResourceDetails;
 import software.amazon.awssdk.services.inspector2.model.Severity;
 import software.amazon.awssdk.services.inspector2.model.StringComparison;
 import software.amazon.awssdk.services.inspector2.model.StringFilter;
-import software.amazon.awssdk.services.inspector2.model.VulnerablePackage;
 
 /**
  * Builds the Inspector findings digest: fetches all active HIGH and CRITICAL package vulnerability
@@ -42,11 +34,8 @@ import software.amazon.awssdk.services.inspector2.model.VulnerablePackage;
 public class InspectorDigestService {
 
   public static final int MAX_VULNERABILITY_LINES = 15;
-  private static final String UNKNOWN = "unknown";
-  private static final String NO_FIXED_VERSION = "";
   private static final String ACTIVE_FINDINGS_HEADER =
       "*Active HIGH and CRITICAL dependency vulnerabilities:*";
-  private static final String STACK_NAME_TAG = "aws:cloudformation:stack-name";
   private static final String LINE_BREAK = "\n";
 
   private final Inspector2Client inspectorClient;
@@ -67,12 +56,12 @@ public class InspectorDigestService {
         createNotification(activeFindings, newVulnerabilities, newFindingMaxAgeHours));
   }
 
-  private List<Finding> fetchActiveFindings() {
-    var findings = new ArrayList<Finding>();
+  private List<DigestFinding> fetchActiveFindings() {
+    var findings = new ArrayList<DigestFinding>();
     String nextToken = null;
     do {
       var response = inspectorClient.listFindings(listFindingsRequest(nextToken));
-      findings.addAll(response.findings());
+      response.findings().stream().map(DigestFinding::fromSdk).forEach(findings::add);
       nextToken = response.nextToken();
     } while (nonNull(nextToken));
     return findings;
@@ -84,24 +73,22 @@ public class InspectorDigestService {
    * Inspector opens a fresh finding whenever an affected function is redeployed.
    */
   private List<VulnerabilityAggregate> newVulnerabilities(
-      List<Finding> activeFindings, int newFindingMaxAgeHours) {
+      List<DigestFinding> activeFindings, int newFindingMaxAgeHours) {
     var cutoff = Instant.now(clock).minus(Duration.ofHours(newFindingMaxAgeHours));
     var groups =
         activeFindings.stream()
-            .collect(
-                groupingBy(InspectorDigestService::aggregationKey, LinkedHashMap::new, toList()));
+            .collect(groupingBy(DigestFinding::aggregationKey, LinkedHashMap::new, toList()));
     return groups.entrySet().stream()
         .filter(entry -> vulnerabilityFirstObservedAfter(entry.getValue(), cutoff))
-        .map(entry -> toAggregate(entry.getKey(), entry.getValue()))
+        .map(entry -> VulnerabilityAggregate.create(entry.getKey(), entry.getValue()))
         .sorted(displayOrder())
         .toList();
   }
 
   private static boolean vulnerabilityFirstObservedAfter(
-      List<Finding> groupFindings, Instant cutoff) {
+      List<DigestFinding> groupFindings, Instant cutoff) {
     return groupFindings.stream()
-        .map(Finding::firstObservedAt)
-        .filter(Objects::nonNull)
+        .map(DigestFinding::firstObservedAt)
         .min(Instant::compareTo)
         .filter(cutoff::isBefore)
         .isPresent();
@@ -128,7 +115,7 @@ public class InspectorDigestService {
   }
 
   private static ChatbotCustomNotification createNotification(
-      List<Finding> activeFindings,
+      List<DigestFinding> activeFindings,
       List<VulnerabilityAggregate> newVulnerabilities,
       int newFindingMaxAgeHours) {
     return ChatbotCustomNotification.create(
@@ -142,7 +129,7 @@ public class InspectorDigestService {
   }
 
   private static String description(
-      List<Finding> activeFindings,
+      List<DigestFinding> activeFindings,
       List<VulnerabilityAggregate> newVulnerabilities,
       int newFindingMaxAgeHours) {
     var lines = new ArrayList<String>();
@@ -155,13 +142,14 @@ public class InspectorDigestService {
     return String.join(LINE_BREAK, lines);
   }
 
-  private static String totalsLine(List<Finding> activeFindings, Severity severity) {
+  private static String totalsLine(List<DigestFinding> activeFindings, Severity severity) {
     var matchingFindings =
         activeFindings.stream().filter(finding -> severity == finding.severity()).toList();
+    var affectedStacks = DigestFinding.countDistinctStacks(matchingFindings);
     var distinctVulnerabilities =
-        matchingFindings.stream().map(InspectorDigestService::vulnerabilityId).distinct().count();
+        matchingFindings.stream().map(DigestFinding::vulnerabilityId).distinct().count();
     return "%s: %d vulnerabilities affecting %d stacks"
-        .formatted(severity, distinctVulnerabilities, countAffectedStacks(matchingFindings));
+        .formatted(severity, distinctVulnerabilities, affectedStacks);
   }
 
   private static List<String> vulnerabilityLines(List<VulnerabilityAggregate> newVulnerabilities) {
@@ -188,86 +176,6 @@ public class InspectorDigestService {
             aggregate.packageVersion(),
             fixPart,
             aggregate.affectedStackCount());
-  }
-
-  private static AggregationKey aggregationKey(Finding finding) {
-    var vulnerablePackage = firstVulnerablePackage(finding);
-    return new AggregationKey(
-        vulnerabilityId(finding),
-        vulnerablePackage.map(VulnerablePackage::name).orElse(UNKNOWN),
-        vulnerablePackage.map(VulnerablePackage::version).orElse(UNKNOWN));
-  }
-
-  private static VulnerabilityAggregate toAggregate(
-      AggregationKey key, List<Finding> groupFindings) {
-    return new VulnerabilityAggregate(
-        key.vulnerabilityId(),
-        key.packageName(),
-        key.packageVersion(),
-        highestSeverity(groupFindings),
-        fixedVersion(groupFindings),
-        countAffectedStacks(groupFindings));
-  }
-
-  /**
-   * Inspector scores per resource, so one vulnerability can be HIGH on one function and CRITICAL on
-   * another. The query only returns HIGH and CRITICAL findings, so the highest severity is CRITICAL
-   * when any finding has it.
-   */
-  private static Severity highestSeverity(List<Finding> groupFindings) {
-    var anyCritical =
-        groupFindings.stream().anyMatch(finding -> Severity.CRITICAL == finding.severity());
-    return anyCritical ? Severity.CRITICAL : groupFindings.getFirst().severity();
-  }
-
-  private static String fixedVersion(List<Finding> groupFindings) {
-    return groupFindings.stream()
-        .filter(finding -> FixAvailable.YES == finding.fixAvailable())
-        .map(InspectorDigestService::firstVulnerablePackage)
-        .flatMap(Optional::stream)
-        .map(VulnerablePackage::fixedInVersion)
-        .filter(Objects::nonNull)
-        .findFirst()
-        .orElse(NO_FIXED_VERSION);
-  }
-
-  private static long countAffectedStacks(List<Finding> findings) {
-    return findings.stream()
-        .flatMap(finding -> finding.resources().stream())
-        .map(InspectorDigestService::stackIdentifier)
-        .distinct()
-        .count();
-  }
-
-  /**
-   * Identifies a resource by its CloudFormation stack, since a stack maps one-to-one to a
-   * microservice that is deployed and patched as a unit; counting individual Lambda functions would
-   * inflate the numbers with every function of the same service. Falls back to the Lambda function
-   * name (which still collapses Inspector's one-resource-per-scanned-version) and last the resource
-   * id.
-   */
-  private static String stackIdentifier(Resource resource) {
-    return Optional.ofNullable(resource.tags().get(STACK_NAME_TAG))
-        .or(() -> lambdaFunctionName(resource))
-        .orElseGet(resource::id);
-  }
-
-  private static Optional<String> lambdaFunctionName(Resource resource) {
-    return Optional.ofNullable(resource.details())
-        .map(ResourceDetails::awsLambdaFunction)
-        .map(AwsLambdaFunctionDetails::functionName);
-  }
-
-  private static Optional<VulnerablePackage> firstVulnerablePackage(Finding finding) {
-    return Optional.ofNullable(finding.packageVulnerabilityDetails())
-        .map(PackageVulnerabilityDetails::vulnerablePackages)
-        .flatMap(packages -> packages.stream().findFirst());
-  }
-
-  private static String vulnerabilityId(Finding finding) {
-    return Optional.ofNullable(finding.packageVulnerabilityDetails())
-        .map(PackageVulnerabilityDetails::vulnerabilityId)
-        .orElse(UNKNOWN);
   }
 
   private static Comparator<VulnerabilityAggregate> displayOrder() {

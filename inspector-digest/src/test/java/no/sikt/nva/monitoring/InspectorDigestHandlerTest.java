@@ -187,6 +187,34 @@ class InspectorDigestHandlerTest {
   }
 
   @Test
+  void shouldUseHighestSeverityWhenSameVulnerabilityHasMixedSeverities() {
+    stubSinglePage(
+        finding(
+            "CVE-2026-1111",
+            "log4j-core",
+            "2.14.0",
+            Severity.HIGH,
+            RECENTLY_OBSERVED,
+            FixAvailable.NO,
+            NO_FIXED_VERSION,
+            "function-one"),
+        finding(
+            "CVE-2026-1111",
+            "log4j-core",
+            "2.14.0",
+            Severity.CRITICAL,
+            RECENTLY_OBSERVED,
+            FixAvailable.NO,
+            NO_FIXED_VERSION,
+            "function-two"));
+
+    handler().handleRequest(EVENT, CONTEXT);
+
+    var description = publishedNotification().content().description();
+    assertThat(lineContaining(description, "CVE-2026-1111")).contains("CRITICAL");
+  }
+
+  @Test
   void shouldFetchAllPagesAndFilterOnActiveHighAndCriticalPackageVulnerabilities() {
     var firstPage =
         ListFindingsResponse.builder()

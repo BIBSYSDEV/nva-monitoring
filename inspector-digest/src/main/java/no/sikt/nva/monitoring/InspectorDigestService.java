@@ -204,9 +204,20 @@ public class InspectorDigestService {
         key.vulnerabilityId(),
         key.packageName(),
         key.packageVersion(),
-        groupFindings.getFirst().severity(),
+        highestSeverity(groupFindings),
         fixedVersion(groupFindings),
         countAffectedStacks(groupFindings));
+  }
+
+  /**
+   * Inspector scores per resource, so one vulnerability can be HIGH on one function and CRITICAL
+   * on another. The query only returns HIGH and CRITICAL findings, so the highest severity is
+   * CRITICAL when any finding has it.
+   */
+  private static Severity highestSeverity(List<Finding> groupFindings) {
+    var anyCritical =
+        groupFindings.stream().anyMatch(finding -> Severity.CRITICAL == finding.severity());
+    return anyCritical ? Severity.CRITICAL : groupFindings.getFirst().severity();
   }
 
   private static String fixedVersion(List<Finding> groupFindings) {

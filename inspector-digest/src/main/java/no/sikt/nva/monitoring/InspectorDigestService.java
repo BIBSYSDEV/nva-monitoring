@@ -34,10 +34,10 @@ import software.amazon.awssdk.services.inspector2.model.VulnerablePackage;
 
 /**
  * Builds the Inspector findings digest: fetches all active HIGH and CRITICAL package vulnerability
- * findings, and summarizes them as one Slack message with headline totals plus the new findings
- * aggregated per vulnerability and package. Returns nothing when no finding was first observed
- * within the max-age window. The digest frequency is owned by the EventBridge schedule in
- * template.yaml, together with the matching max-age window.
+ * findings, and summarizes them as one Slack message with headline totals plus the new
+ * vulnerabilities aggregated per vulnerability and package. Returns nothing when no vulnerability
+ * was first observed within the max-age window. The digest frequency is owned by the EventBridge
+ * schedule in template.yaml, together with the matching max-age window.
  */
 public class InspectorDigestService {
 
@@ -59,11 +59,12 @@ public class InspectorDigestService {
 
   public Optional<ChatbotCustomNotification> createDigest(int newFindingMaxAgeHours) {
     var activeFindings = fetchActiveFindings();
-    var newFindings = findingsObservedAfterCutoff(activeFindings, newFindingMaxAgeHours);
-    if (newFindings.isEmpty()) {
+    var newVulnerabilities = newVulnerabilities(activeFindings, newFindingMaxAgeHours);
+    if (newVulnerabilities.isEmpty()) {
       return Optional.empty();
     }
-    return Optional.of(createNotification(activeFindings, newFindings, newFindingMaxAgeHours));
+    return Optional.of(
+        createNotification(activeFindings, newVulnerabilities, newFindingMaxAgeHours));
   }
 
   private List<Finding> fetchActiveFindings() {
@@ -77,13 +78,33 @@ public class InspectorDigestService {
     return findings;
   }
 
-  private List<Finding> findingsObservedAfterCutoff(
-      List<Finding> findings, int newFindingMaxAgeHours) {
+  /**
+   * A vulnerability counts as new when the earliest firstObservedAt across all its active findings
+   * is within the max-age window. Deciding per finding would re-report old vulnerabilities, since
+   * Inspector opens a fresh finding whenever an affected function is redeployed.
+   */
+  private List<VulnerabilityAggregate> newVulnerabilities(
+      List<Finding> activeFindings, int newFindingMaxAgeHours) {
     var cutoff = Instant.now(clock).minus(Duration.ofHours(newFindingMaxAgeHours));
-    return findings.stream()
-        .filter(finding -> nonNull(finding.firstObservedAt()))
-        .filter(finding -> finding.firstObservedAt().isAfter(cutoff))
+    var groups =
+        activeFindings.stream()
+            .collect(
+                groupingBy(InspectorDigestService::aggregationKey, LinkedHashMap::new, toList()));
+    return groups.entrySet().stream()
+        .filter(entry -> vulnerabilityFirstObservedAfter(entry.getValue(), cutoff))
+        .map(entry -> toAggregate(entry.getKey(), entry.getValue()))
+        .sorted(displayOrder())
         .toList();
+  }
+
+  private static boolean vulnerabilityFirstObservedAfter(
+      List<Finding> groupFindings, Instant cutoff) {
+    return groupFindings.stream()
+        .map(Finding::firstObservedAt)
+        .filter(Objects::nonNull)
+        .min(Instant::compareTo)
+        .filter(cutoff::isBefore)
+        .isPresent();
   }
 
   private static ListFindingsRequest listFindingsRequest(String nextToken) {
@@ -107,8 +128,9 @@ public class InspectorDigestService {
   }
 
   private static ChatbotCustomNotification createNotification(
-      List<Finding> activeFindings, List<Finding> newFindings, int newFindingMaxAgeHours) {
-    var newVulnerabilities = aggregateByVulnerabilityAndPackage(newFindings);
+      List<Finding> activeFindings,
+      List<VulnerabilityAggregate> newVulnerabilities,
+      int newFindingMaxAgeHours) {
     return ChatbotCustomNotification.create(
         title(newVulnerabilities),
         description(activeFindings, newVulnerabilities, newFindingMaxAgeHours));
@@ -166,18 +188,6 @@ public class InspectorDigestService {
             aggregate.packageVersion(),
             fixPart,
             aggregate.affectedFunctionCount());
-  }
-
-  private static List<VulnerabilityAggregate> aggregateByVulnerabilityAndPackage(
-      List<Finding> findings) {
-    var groups =
-        findings.stream()
-            .collect(
-                groupingBy(InspectorDigestService::aggregationKey, LinkedHashMap::new, toList()));
-    return groups.entrySet().stream()
-        .map(entry -> toAggregate(entry.getKey(), entry.getValue()))
-        .sorted(displayOrder())
-        .toList();
   }
 
   private static AggregationKey aggregationKey(Finding finding) {

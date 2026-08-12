@@ -242,6 +242,33 @@ class InspectorDigestHandlerTest {
     assertThat(description).contains("CRITICAL: 1 vulnerabilities affecting 1 resources");
   }
 
+  @Test
+  void shouldNotReportOldVulnerabilityAsNewWhenRedeployCreatesFreshFinding() {
+    stubSinglePage(
+        finding(
+            "CVE-2020-0001",
+            "log4j-core",
+            "2.14.0",
+            Severity.HIGH,
+            OBSERVED_LONG_AGO,
+            FixAvailable.NO,
+            NO_FIXED_VERSION,
+            "function-one"),
+        finding(
+            "CVE-2020-0001",
+            "log4j-core",
+            "2.14.0",
+            Severity.HIGH,
+            RECENTLY_OBSERVED,
+            FixAvailable.NO,
+            NO_FIXED_VERSION,
+            "function-two"));
+
+    handler().handleRequest(EVENT, CONTEXT);
+
+    verify(snsClient, never()).publish(any(PublishRequest.class));
+  }
+
   private InspectorDigestHandler handler() {
     return new InspectorDigestHandler(inspectorClient, snsClient, ENVIRONMENT, FIXED_CLOCK);
   }

@@ -210,9 +210,9 @@ public class InspectorDigestService {
   }
 
   /**
-   * Inspector scores per resource, so one vulnerability can be HIGH on one function and CRITICAL
-   * on another. The query only returns HIGH and CRITICAL findings, so the highest severity is
-   * CRITICAL when any finding has it.
+   * Inspector scores per resource, so one vulnerability can be HIGH on one function and CRITICAL on
+   * another. The query only returns HIGH and CRITICAL findings, so the highest severity is CRITICAL
+   * when any finding has it.
    */
   private static Severity highestSeverity(List<Finding> groupFindings) {
     var anyCritical =

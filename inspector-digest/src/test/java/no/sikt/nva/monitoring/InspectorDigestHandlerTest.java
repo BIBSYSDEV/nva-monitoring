@@ -17,6 +17,7 @@ import java.time.Instant;
 import java.time.ZoneOffset;
 import java.util.Arrays;
 import java.util.List;
+import java.util.Map;
 import java.util.stream.IntStream;
 import no.sikt.nva.monitoring.model.ChatbotCustomNotification;
 import no.unit.nva.commons.json.JsonUtils;
@@ -25,6 +26,7 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.mockito.ArgumentCaptor;
 import software.amazon.awssdk.services.inspector2.Inspector2Client;
+import software.amazon.awssdk.services.inspector2.model.AwsLambdaFunctionDetails;
 import software.amazon.awssdk.services.inspector2.model.Finding;
 import software.amazon.awssdk.services.inspector2.model.FindingStatus;
 import software.amazon.awssdk.services.inspector2.model.FindingType;
@@ -33,6 +35,7 @@ import software.amazon.awssdk.services.inspector2.model.ListFindingsRequest;
 import software.amazon.awssdk.services.inspector2.model.ListFindingsResponse;
 import software.amazon.awssdk.services.inspector2.model.PackageVulnerabilityDetails;
 import software.amazon.awssdk.services.inspector2.model.Resource;
+import software.amazon.awssdk.services.inspector2.model.ResourceDetails;
 import software.amazon.awssdk.services.inspector2.model.ResourceType;
 import software.amazon.awssdk.services.inspector2.model.Severity;
 import software.amazon.awssdk.services.inspector2.model.StringFilter;
@@ -103,7 +106,7 @@ class InspectorDigestHandlerTest {
 
     var description = publishedNotification().content().description();
     assertThat(description).containsOnlyOnce("CVE-2026-1111");
-    assertThat(lineContaining(description, "CVE-2026-1111")).contains("(2 resources)");
+    assertThat(lineContaining(description, "CVE-2026-1111")).contains("(2 stacks)");
   }
 
   @Test
@@ -125,8 +128,8 @@ class InspectorDigestHandlerTest {
 
     var description = publishedNotification().content().description();
     assertThat(description)
-        .contains("CRITICAL: 1 vulnerabilities affecting 2 resources")
-        .contains("HIGH: 1 vulnerabilities affecting 1 resources");
+        .contains("CRITICAL: 1 vulnerabilities affecting 2 stacks")
+        .contains("HIGH: 1 vulnerabilities affecting 1 stacks");
     assertThat(lineContaining(description, "New in the last")).contains("24 hours");
     assertThat(description).doesNotContain("CVE-2020-0001");
   }
@@ -231,15 +234,64 @@ class InspectorDigestHandlerTest {
   void shouldCountScannedVersionsOfTheSameFunctionAsOneFunction() {
     var unqualifiedArn = "arn:aws:lambda:eu-west-1:123456789012:function:function-a";
     stubSinglePage(
-        criticalFinding("CVE-2026-1111", unqualifiedArn),
-        criticalFinding("CVE-2026-1111", unqualifiedArn + ":12"),
-        criticalFinding("CVE-2026-1111", unqualifiedArn + ":13"));
+        withResource(
+            criticalFinding("CVE-2026-1111", "unused"),
+            lambdaResource(unqualifiedArn + ":$LATEST", "function-a")),
+        withResource(
+            criticalFinding("CVE-2026-1111", "unused"),
+            lambdaResource(unqualifiedArn + ":12", "function-a")),
+        withResource(
+            criticalFinding("CVE-2026-1111", "unused"),
+            lambdaResource(unqualifiedArn + ":13", "function-a")));
 
     handler().handleRequest(EVENT, CONTEXT);
 
     var description = publishedNotification().content().description();
-    assertThat(lineContaining(description, "CVE-2026-1111")).contains("(1 resources)");
-    assertThat(description).contains("CRITICAL: 1 vulnerabilities affecting 1 resources");
+    assertThat(lineContaining(description, "CVE-2026-1111")).contains("(1 stacks)");
+    assertThat(description).contains("CRITICAL: 1 vulnerabilities affecting 1 stacks");
+  }
+
+  @Test
+  void shouldCountFunctionsInTheSameStackAsOneStack() {
+    stubSinglePage(
+        withResource(
+            criticalFinding("CVE-2026-1111", "unused"),
+            stackTaggedResource("function-one", "nva-cristin-service")),
+        withResource(
+            criticalFinding("CVE-2026-1111", "unused"),
+            stackTaggedResource("function-two", "nva-cristin-service")));
+
+    handler().handleRequest(EVENT, CONTEXT);
+
+    var description = publishedNotification().content().description();
+    assertThat(lineContaining(description, "CVE-2026-1111")).contains("(1 stacks)");
+    assertThat(description).contains("CRITICAL: 1 vulnerabilities affecting 1 stacks");
+  }
+
+  private static Resource stackTaggedResource(String id, String stackName) {
+    return Resource.builder()
+        .id(id)
+        .type(ResourceType.AWS_LAMBDA_FUNCTION)
+        .tags(Map.of("aws:cloudformation:stack-name", stackName))
+        .build();
+  }
+
+  private static Finding withResource(Finding finding, Resource resource) {
+    return finding.toBuilder().resources(resource).build();
+  }
+
+  private static Resource lambdaResource(String versionQualifiedArn, String functionName) {
+    return Resource.builder()
+        .id(versionQualifiedArn)
+        .type(ResourceType.AWS_LAMBDA_FUNCTION)
+        .details(resourceDetails(functionName))
+        .build();
+  }
+
+  private static ResourceDetails resourceDetails(String functionName) {
+    return ResourceDetails.builder()
+        .awsLambdaFunction(AwsLambdaFunctionDetails.builder().functionName(functionName).build())
+        .build();
   }
 
   @Test

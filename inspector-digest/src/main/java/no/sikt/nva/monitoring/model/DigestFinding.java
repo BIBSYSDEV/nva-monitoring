@@ -1,6 +1,7 @@
 package no.sikt.nva.monitoring.model;
 
 import java.time.Instant;
+import java.util.Comparator;
 import java.util.List;
 import java.util.Optional;
 import software.amazon.awssdk.services.inspector2.model.AwsLambdaFunctionDetails;
@@ -28,6 +29,14 @@ public record DigestFinding(
     List<String> affectedStacks) {
 
   public static final String NO_FIXED_VERSION = "";
+
+  /**
+   * The digest query only returns HIGH and CRITICAL findings, so ranking severities reduces to
+   * CRITICAL before HIGH.
+   */
+  public static final Comparator<Severity> MOST_SEVERE_FIRST =
+      Comparator.comparingInt(severity -> Severity.CRITICAL == severity ? 0 : 1);
+
   private static final String UNKNOWN = "unknown";
   private static final String STACK_NAME_TAG = "aws:cloudformation:stack-name";
 
@@ -45,6 +54,10 @@ public record DigestFinding(
 
   public AggregationKey aggregationKey() {
     return new AggregationKey(vulnerabilityId, packageName, packageVersion);
+  }
+
+  public static Severity highestSeverity(Severity first, Severity second) {
+    return MOST_SEVERE_FIRST.compare(first, second) <= 0 ? first : second;
   }
 
   public static long countDistinctStacks(List<DigestFinding> findings) {

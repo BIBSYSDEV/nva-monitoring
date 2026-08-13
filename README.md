@@ -11,8 +11,9 @@ HIGH findings are instead covered by the weekly digest.
 
 The `inspector-digest` Lambda runs every Monday at 06:00 UTC.
 It lists all active HIGH and CRITICAL package vulnerability findings through the Inspector API.
-If any findings were first observed within the last 169 hours (configurable via `NEW_FINDING_MAX_AGE_HOURS`), it posts one Slack message with headline totals per severity and the new findings aggregated per CVE and package, including the fixed version when one is available.
-Affected counts are per CloudFormation stack (one stack per microservice), not per Lambda function.
+If any findings were first observed within the last 169 hours (configurable via `NEW_FINDING_MAX_AGE_HOURS`), it posts one Slack message listing the affected stacks with their active CRITICAL and HIGH vulnerability counts (the services that need patching), followed by the new findings aggregated per CVE and package, including the fixed version when one is available.
+Everything is one message because AWS Chatbot custom notifications cannot reply in a thread.
+Affected counts are per CloudFormation stack (one stack per microservice), not per Lambda function, and a vulnerability counts once per stack at its highest severity there.
 The window is the weekly schedule interval plus one hour of margin, so schedule jitter cannot drop findings between two runs; the two values must be kept in sync in `template.yaml`.
 When nothing new has appeared, it posts nothing.
 Enabling Inspector itself is a manual account-level step, documented in the NVA-infrastructure README.

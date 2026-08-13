@@ -14,6 +14,7 @@ import java.util.List;
 import java.util.Optional;
 import no.sikt.nva.monitoring.model.ChatbotCustomNotification;
 import no.sikt.nva.monitoring.model.DigestFinding;
+import no.sikt.nva.monitoring.model.StackAggregate;
 import no.sikt.nva.monitoring.model.VulnerabilityAggregate;
 import software.amazon.awssdk.services.inspector2.Inspector2Client;
 import software.amazon.awssdk.services.inspector2.model.FilterCriteria;
@@ -26,16 +27,18 @@ import software.amazon.awssdk.services.inspector2.model.StringFilter;
 
 /**
  * Builds the Inspector findings digest: fetches all active HIGH and CRITICAL package vulnerability
- * findings, and summarizes them as one Slack message with headline totals plus the new
- * vulnerabilities aggregated per vulnerability and package. Returns nothing when no vulnerability
- * was first observed within the max-age window. The digest frequency is owned by the EventBridge
- * schedule in template.yaml, together with the matching max-age window.
+ * findings, and summarizes them as one Slack message listing the affected stacks with their
+ * vulnerability counts (the services that need patching), followed by the new vulnerabilities
+ * aggregated per vulnerability and package. Returns nothing when no vulnerability was first
+ * observed within the max-age window. The digest frequency is owned by the EventBridge schedule in
+ * template.yaml, together with the matching max-age window.
  */
 public class InspectorDigestService {
 
-  public static final int MAX_VULNERABILITY_LINES = 15;
-  private static final String ACTIVE_FINDINGS_HEADER =
-      "*Active HIGH and CRITICAL dependency vulnerabilities:*";
+  private static final int MAX_VULNERABILITY_LINES = 5;
+  private static final int MAX_STACK_LINES = 10;
+  private static final String STACKS_HEADER =
+      "*Stacks with active HIGH/CRITICAL dependency vulnerabilities:*";
   private static final String LINE_BREAK = "\n";
 
   private final Inspector2Client inspectorClient;
@@ -133,36 +136,50 @@ public class InspectorDigestService {
       List<VulnerabilityAggregate> newVulnerabilities,
       int newFindingMaxAgeHours) {
     var lines = new ArrayList<String>();
-    lines.add(ACTIVE_FINDINGS_HEADER);
-    lines.add(totalsLine(activeFindings, Severity.CRITICAL));
-    lines.add(totalsLine(activeFindings, Severity.HIGH));
+    lines.add(STACKS_HEADER);
+    lines.addAll(stackLines(activeFindings));
     lines.add("");
     lines.add("*New in the last %d hours:*".formatted(newFindingMaxAgeHours));
     lines.addAll(vulnerabilityLines(newVulnerabilities));
     return String.join(LINE_BREAK, lines);
   }
 
-  private static String totalsLine(List<DigestFinding> activeFindings, Severity severity) {
-    var matchingFindings =
-        activeFindings.stream().filter(finding -> severity == finding.severity()).toList();
-    var affectedStacks = DigestFinding.countDistinctStacks(matchingFindings);
-    var distinctVulnerabilities =
-        matchingFindings.stream().map(DigestFinding::vulnerabilityId).distinct().count();
-    return "%s: %d vulnerabilities affecting %d stacks"
-        .formatted(severity, distinctVulnerabilities, affectedStacks);
+  private static List<String> stackLines(List<DigestFinding> activeFindings) {
+    var lines =
+        StackAggregate.createAll(activeFindings).stream()
+            .sorted(stackDisplayOrder())
+            .map(InspectorDigestService::stackLine)
+            .toList();
+    return truncate(lines, MAX_STACK_LINES);
+  }
+
+  private static String stackLine(StackAggregate stack) {
+    return "• `%s`: %s".formatted(stack.stackName(), severityCounts(stack));
+  }
+
+  private static String severityCounts(StackAggregate stack) {
+    var parts = new ArrayList<String>();
+    if (stack.criticalCount() > 0) {
+      parts.add("%d CRITICAL".formatted(stack.criticalCount()));
+    }
+    if (stack.highCount() > 0) {
+      parts.add("%d HIGH".formatted(stack.highCount()));
+    }
+    return String.join(", ", parts);
   }
 
   private static List<String> vulnerabilityLines(List<VulnerabilityAggregate> newVulnerabilities) {
-    var lines =
-        newVulnerabilities.stream()
-            .limit(MAX_VULNERABILITY_LINES)
-            .map(InspectorDigestService::vulnerabilityLine)
-            .collect(toList());
-    var truncatedCount = newVulnerabilities.size() - MAX_VULNERABILITY_LINES;
-    if (truncatedCount > 0) {
-      lines.add("...and %d more".formatted(truncatedCount));
+    var lines = newVulnerabilities.stream().map(InspectorDigestService::vulnerabilityLine).toList();
+    return truncate(lines, MAX_VULNERABILITY_LINES);
+  }
+
+  private static List<String> truncate(List<String> lines, int maxLines) {
+    if (lines.size() <= maxLines) {
+      return lines;
     }
-    return lines;
+    var truncatedLines = new ArrayList<>(lines.subList(0, maxLines));
+    truncatedLines.add("...and %d more".formatted(lines.size() - maxLines));
+    return truncatedLines;
   }
 
   private static String vulnerabilityLine(VulnerabilityAggregate aggregate) {
@@ -179,10 +196,16 @@ public class InspectorDigestService {
   }
 
   private static Comparator<VulnerabilityAggregate> displayOrder() {
-    return Comparator.<VulnerabilityAggregate>comparingInt(
-            aggregate -> Severity.CRITICAL == aggregate.severity() ? 0 : 1)
+    return Comparator.comparing(VulnerabilityAggregate::severity, DigestFinding.MOST_SEVERE_FIRST)
         .thenComparing(
             Comparator.comparingLong(VulnerabilityAggregate::affectedStackCount).reversed())
         .thenComparing(VulnerabilityAggregate::vulnerabilityId);
+  }
+
+  private static Comparator<StackAggregate> stackDisplayOrder() {
+    return Comparator.comparingLong(StackAggregate::criticalCount)
+        .reversed()
+        .thenComparing(Comparator.comparingLong(StackAggregate::highCount).reversed())
+        .thenComparing(StackAggregate::stackName);
   }
 }

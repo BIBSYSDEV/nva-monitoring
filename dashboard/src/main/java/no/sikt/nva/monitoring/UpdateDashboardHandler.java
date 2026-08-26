@@ -9,6 +9,7 @@ import no.sikt.nva.monitoring.model.CloudWatchWidget;
 import no.sikt.nva.monitoring.model.DashboardBody;
 import no.sikt.nva.monitoring.model.factory.AlarmWidgetFactory;
 import no.sikt.nva.monitoring.model.factory.ApiGatewayWidgetFactory;
+import no.sikt.nva.monitoring.model.factory.CostWidgetFactory;
 import no.sikt.nva.monitoring.model.factory.DocumentationLinksWidget;
 import no.sikt.nva.monitoring.model.factory.LogWidgetFactory;
 import nva.commons.core.Environment;
@@ -88,11 +89,13 @@ public class UpdateDashboardHandler
         logWidgetFactory.createLogWidgetForApiGatewayLogs(
             API_GATEWAY_4XX_ERROR_LOG, FILTER_FOR_4XX_ERRORS, LOG_4XX_X_COORDINATE);
     var lambdaConcurrencyWidget = LambdaWidget.createConcurrencyWidget();
+    var costWidget = CostWidgetFactory.create();
     var staticWidgets =
         Stream.<CloudWatchWidget>of(
             documentationLinksWidget,
             alarmWidget,
             lambdaConcurrencyWidget,
+            costWidget,
             apiGateway5xxWidget,
             apiGateway4xxWidget,
             apiGatewayCountWidget,

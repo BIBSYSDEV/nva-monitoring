@@ -53,6 +53,7 @@ import no.sikt.nva.monitoring.model.LogProperties;
 import no.sikt.nva.monitoring.model.MetricProperties;
 import no.sikt.nva.monitoring.model.MetricSearchExpression;
 import no.sikt.nva.monitoring.model.TextProperties;
+import no.sikt.nva.monitoring.model.factory.CostWidgetFactory;
 import no.sikt.nva.monitoring.utils.FakeApiGatewayClient;
 import no.sikt.nva.monitoring.utils.FakeCloudWatchClient;
 import no.sikt.nva.monitoring.utils.FakeCloudWatchClientThrowingException;
@@ -273,6 +274,16 @@ public class UpdateDashboardHandlerTest {
         JsonUtils.dtoObjectMapper.readValue(EXPECTED_LAMBDA_WIDGET, CloudWatchWidget.class);
 
     assertThat(dashboardBody.widgets(), hasItem(expectedLambdaWidget));
+  }
+
+  @Test
+  void shouldUpdateDashboardWithEstimatedChargesCostWidget() throws JsonProcessingException {
+    handler.handleRequest(EVENT, mockContext);
+    var dashboardBody = getDashboardBody();
+    var expectedCostWidget =
+        JsonUtils.dtoObjectMapper.readValue(
+            CostWidgetFactory.create().toJsonString(), CloudWatchWidget.class);
+    assertThat(dashboardBody.widgets(), hasItem(expectedCostWidget));
   }
 
   @Test

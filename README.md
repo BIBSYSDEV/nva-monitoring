@@ -19,4 +19,5 @@ When nothing new has appeared, it posts nothing.
 Enabling Inspector itself is a manual account-level step, documented in the NVA-infrastructure README.
 
 Accepted findings should be suppressed with `AWS::InspectorV2::Filter` resources in `template.yaml`, so suppressions are code reviewed.
-There are none yet; add them as real suppressions come up.
+Each filter matches one CVE and states in its description why the finding is accepted and when the filter can be removed.
+Filters can only be deployed where Inspector is enabled, so they carry the `InspectorEnabled` condition, which lists the enabled accounts.

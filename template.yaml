@@ -22,6 +22,11 @@ Parameters:
     Type: AWS::SSM::Parameter::Value<String>
     Default: "/NVA/Monitoring/SlackSnsArn"
 
+Conditions:
+  # AWS::InspectorV2::Filter resources fail to deploy where it is not enabled. Currently only
+  # sikt-nva-sandbox. Extend with !Or when more accounts are enabled.
+  InspectorEnabled: !Equals [!Ref "AWS::AccountId", "750639270376"]
+
 Resources:
   UpdateDashboardHandlerLogGroup:
     Type: "AWS::Logs::LogGroup"
@@ -239,6 +244,24 @@ Resources:
             # Changing the frequency requires adjusting NEW_FINDING_MAX_AGE_HOURS above.
             Schedule: "cron(0 6 ? * MON *)"
             Description: "Weekly digest of active HIGH and CRITICAL Inspector package vulnerability findings"
+
+  # Suppressions of accepted findings. One resource per CVE, each with the reason and
+  # the condition for removing it in the Description.
+  SuppressNettySniBypassFinding:
+    Type: AWS::InspectorV2::Filter
+    Condition: InspectorEnabled
+    Properties:
+      Name: "Suppress CVE-2026-75595 (Netty SNI bypass)"
+      Description: >-
+        netty-handler is only bundled as the AWS SDK async HTTP transport. Our Lambdas
+        never run a Netty TLS server, so the vulnerable SslClientHelloHandler is
+        unreachable. Remove when netty-nio-client is excluded from the builds or
+        netty is >= 4.1.137.
+      FilterAction: SUPPRESS
+      FilterCriteria:
+        VulnerabilityId:
+          - Comparison: EQUALS
+            Value: CVE-2026-75595
 
   CostAnomalyMonitor:
     Type: "AWS::CE::AnomalyMonitor"

@@ -7,7 +7,7 @@ Globals:
     Architectures:
       - arm64
     MemorySize: 1800
-    Runtime: java21
+    Runtime: java25
     Environment:
       Variables:
         LOG_LEVEL: "info"

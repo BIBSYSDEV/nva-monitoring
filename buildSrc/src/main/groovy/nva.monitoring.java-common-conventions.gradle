@@ -6,6 +6,9 @@ nva {
     errorprone {
         allErrorsAsWarnings = false
     }
+    java {
+        languageVersion = 25
+    }
     pmd {
         analyzeTests = false
         excludedRules = [

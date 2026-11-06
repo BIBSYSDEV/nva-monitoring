@@ -313,10 +313,8 @@ public class UpdateDashboardHandlerTest {
   private static List<String> getAlarmArns(DashboardBody dashboardBody) {
     return dashboardBody.widgets().stream()
         .filter(widget -> widget.type().equals(ALARM))
-        .map(
-            alarmWidget ->
-                JsonUtils.dtoObjectMapper.convertValue(
-                    alarmWidget.properties(), AlarmProperties.class))
+        .map(alarmWidget ->
+            JsonUtils.dtoObjectMapper.convertValue(alarmWidget.properties(), AlarmProperties.class))
         .map(AlarmProperties::alarms)
         .flatMap(List::stream)
         .toList();
